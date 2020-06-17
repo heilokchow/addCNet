@@ -13,7 +13,7 @@ incoming communication. The last column is the communication time point (should 
 in numeric format).}
 
 \item{zij}{The transfromed non-homogeneous effect (array with dimension (n,n,p)). The
-transformation can be done using z_projection() function.}
+transformation can be done using zProjection() function.}
 
 \item{n}{number of individuals in the whole network.}
 
