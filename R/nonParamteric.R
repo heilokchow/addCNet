@@ -115,9 +115,9 @@ nonParametric <- function(data, zij, n, p) {
                                                  B[(n+1):(2*n-1),])),
        homo_sd = list(baseline = matrix(SD[1,], nrow = 1),
                       outgoing = rbind(matrix(SD1[1,], nrow = 1)^0.5,
-                                       SD[2:n,]),
+                                       SD[2:n,]^0.5),
                       incoming = rbind(matrix(SD1[2,], nrow = 1)^0.5,
-                                       SD[(n+1):(2*n-1),])),
+                                       SD[(n+1):(2*n-1),]^0.5)),
        nonhomo_coefficients = B[(2*n):(2*n-1+p),],
        nonhomo_sd = SD[(2*n):(2*n-1+p),]^0.5)
 
