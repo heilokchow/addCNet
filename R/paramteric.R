@@ -117,9 +117,11 @@ parametric <- function(data, zij, n, p, k = 0) {
         q1 = (z2-1)*n2+n*n2
 
         sd1k[p1+j, p1+z] = sd1k[p1+j, p1+z] + F_poly(k1, t_norm[i], j)*F_poly(k1, t_norm[i], z)
-        sd1k[p1+z, p1+j] = sd1k[p1+z, p1+j] + F_poly(k1, t_norm[i], j)*F_poly(k1, t_norm[i], z)
         sd1k[q1+j, q1+z] = sd1k[q1+j, q1+z] + F_poly(k1, t_norm[i], j)*F_poly(k1, t_norm[i], z)
-        sd1k[q1+z, q1+j] = sd1k[q1+z, q1+j] + F_poly(k1, t_norm[i], j)*F_poly(k1, t_norm[i], z)
+        if (j != z) {
+          sd1k[p1+z, p1+j] = sd1k[p1+z, p1+j] + F_poly(k1, t_norm[i], j)*F_poly(k1, t_norm[i], z)
+          sd1k[q1+z, q1+j] = sd1k[q1+z, q1+j] + F_poly(k1, t_norm[i], j)*F_poly(k1, t_norm[i], z)
+        }
       }
     }
 
