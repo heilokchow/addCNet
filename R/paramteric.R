@@ -134,7 +134,7 @@ parametric <- function(data, zij, n, p, k = 0) {
     }
   }
 
-  sd1k = sd1k / n
+  sd1k = sd1k / n^2
 
   output <- list(homo_coef = list(outgoing = rbind(matrix(b1[1,], nrow = 1),
                                                    as.matrix(b1k[1:(n-1),])),
