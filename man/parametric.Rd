@@ -28,5 +28,9 @@ transformation can be done using zProjection() function.}
 \item{nonhomo_sd}{List nonhomogeneous parameter's standard deviation}
 }
 \description{
-This function allows you to do non parametric estimation for additive network model
+This function allows you to do non parametric estimation for additive network model.
+For non-homofily effect, we only consider non-time dependent covariates since it is
+the most common case in real world while time dependent cases are rare and difficult
+to be specified. Also, since the projection should be done at any time t, the model
+with time dependent covariates requires much higher computation power.
 }

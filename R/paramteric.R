@@ -1,7 +1,11 @@
 #' Semi Parametric Estimate
 #'
 #' @description
-#' This function allows you to do non parametric estimation for additive network model
+#' This function allows you to do non parametric estimation for additive network model.
+#' For non-homofily effect, we only consider non-time dependent covariates since it is
+#' the most common case in real world while time dependent cases are rare and difficult
+#' to be specified. Also, since the projection should be done at any time t, the model
+#' with time dependent covariates requires much higher computation power.
 #'
 #' @param data The whole dataset containing pairwise communications, the first column
 #' is the person with outgoing communication and the second column is the person with
@@ -81,11 +85,11 @@ parametric <- function(data, zij, n, p, k = 0) {
   }
 
   n2 = k1*2+1
-  N_t = matrix(0, nrow = n*(n-1), ncol = k1*2+1)
-  b1k = matrix(0, nrow = (2*n-2), ncol = k1*2+1)
+  N_t = matrix(0, nrow = n*(n-1), ncol = n2)
+  b1k = matrix(0, nrow = (2*n-2), ncol = n2)
   sd1k = matrix(0, nrow = 2*n*n2, ncol = 2*n*n2)
-  theta = matrix(0, nrow = p, ncol = 1)
-  theta_sd = matrix(0, nrow = p, ncol = 1)
+  theta = matrix(0, nrow = p, ncol = n2)
+  theta_sd = matrix(0, nrow = p, ncol = n2)
 
   b1 = matrix(0, nrow = 2, ncol = k1*2+1)
 
@@ -127,9 +131,11 @@ parametric <- function(data, zij, n, p, k = 0) {
 
     # Non-Homogeneous Parameters' Estimation and standard deviation
     if (t_norm[i] >= t_sep_t[100]) {
-      theta = 1 / t_norm[i] * P2a %*% matrix(N_t[, 1])
-      for (j in 1:p) {
-        theta_sd[j, 1] = sum(P2a[j,]^2*N_t[, 1])
+      for (z in seq_len(n2)) {
+        theta = 1 / t_norm[i] * P2a %*% matrix(N_t[, z])
+        for (j in 1:p) {
+          theta_sd[j, z] = sum(P2a[j,]^2*N_t[, z])
+        }
       }
     }
   }
