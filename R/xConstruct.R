@@ -1,20 +1,29 @@
 xConstruct <- function(n, A) {
   x = array(0, dim = c((n*(n-1)), 2*(n - 1)))
   p = dim(A)[3]
-  zij = matrix(0, nrow = n*(n-1), ncol = p)
+  t = dim(A)[4]
+  zij = array(0, c(n*(n-1), p, t))
   one = matrix(1, nrow = n*(n-1), ncol = 1)
 
-  A = zProjection(A)
+  for (iter in seq_len(t)) {
+    co = 1
+    A1 = zProjection(A[,,,iter])
+    for (i in 1:n) {
+      for (j in 1:n) {
+        if (i != j) {
+          for (q in seq_len(p)) {
+            zij[co, q, iter] = A1[i, j, q]
+          }
+          co = co + 1
+        }
+      }
+    }
+  }
 
   co = 1
   for (i in 1:n) {
     for (j in 1:n) {
       if (i != j) {
-
-        for (q in seq_len(p)) {
-          zij[co, q] = A[i, j, q]
-        }
-
         if (i == 1) {
           for (k in 1:(n-1)) {
             x[co, k] = -1

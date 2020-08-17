@@ -4,7 +4,7 @@
 \alias{nonParametric}
 \title{Non Parametric Estimate}
 \usage{
-nonParametric(data, zij, n, p)
+nonParametric(data, zij, n, p, tz)
 }
 \arguments{
 \item{data}{The whole dataset containing pairwise communications, the first column
@@ -12,12 +12,16 @@ is the person with outgoing communication and the second column is the person wi
 incoming communication. The last column is the communication time point (should be
 in numeric format).}
 
-\item{zij}{The transfromed non-homogeneous effect (array with dimension (n,n,p)). The
+\item{zij}{The transfromed non-homogeneous effect (array with dimension (n,n,p,t)). The
 transformation can be done using zProjection() function.}
 
 \item{n}{number of individuals in the whole network.}
 
 \item{p}{number of non-homogeneuous effect.}
+
+\item{tz}{Time points for non-homofily effects (ranging from (0,1)), the length of this
+vector should equal to the 4th dimension of zij which reflect the non-homofily effect
+on or before those specific time points.}
 }
 \value{
 \item{homo_coefficients}{List Individual's cumulative effect from scaled time range

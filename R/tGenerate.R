@@ -55,34 +55,45 @@
 #'
 #' @export
 #'
-tGenerate <- function(baseline, fs, fr, fg, n, p, zij, maxit = 10) {
+tGenerate <- function(baseline, fs, fr, fg, n, p, zij, tz, maxit = 10) {
 
-  zij = zProjection(zij)
   co = 1
   all_sim = list()
-  for (i in 1:n) {
-    for (j in 1:n) {
-      if (i != j) {
-        kp = rpois(1,maxit)
-        kt = sort(runif(kp, 0, 1))
-        kt_1 = c()
-        if (kp != 0) {
-          for (z in 1:kp) {
-            temp = bs(kt[z]) + fs(kt[z], i) + fr(kt[z], j)
-            for (k in seq_len(p)) {
-              temp = temp + fg(kt[z], k) * zij[i, j, k]
+  t_l = length(tz)
+  t0 = 0
+  t1 = tz[1]
+
+  for (iter in seq_len(t_l)) {
+    zij_t = zProjection(zij[,,,iter])
+    for (i in 1:n) {
+      for (j in 1:n) {
+        if (i != j) {
+          kp = rpois(1,maxit*(t1 - t0))
+          kt = sort(runif(kp, t0, t1))
+          kt_1 = c()
+          if (kp != 0) {
+            for (z in 1:kp) {
+              temp = bs(kt[z]) + fs(kt[z], i) + fr(kt[z], j)
+              for (k in seq_len(p)) {
+                temp = temp + fg(kt[z], k) * zij_t[i, j, k]
+              }
+              if (runif(1,0,1) < temp/maxit) {
+                kt_1 = c(kt_1, kt[z])
+              }
             }
-            if (runif(1,0,1) < temp/maxit) {
-              kt_1 = c(kt_1, kt[z])
+            kt_l = length(kt_1)
+            for (z in seq_len(kt_l)) {
+              all_sim[[co]] = c(i, j, kt_1[z])
+              co = co + 1
             }
-          }
-          kt_l = length(kt_1)
-          for (z in seq_len(kt_l)) {
-            all_sim[[co]] = c(i, j, kt_1[z])
-            co = co + 1
           }
         }
       }
+    }
+
+    if (iter < t_l) {
+      t0 = t1
+      t1 = tz[iter]
     }
   }
 
