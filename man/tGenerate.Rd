@@ -4,7 +4,7 @@
 \alias{tGenerate}
 \title{Generate Simulation Dataset}
 \usage{
-tGenerate(baseline, fs, fr, fg, n, p, zij, maxit = 10)
+tGenerate(baseline, fs, fr, fg, n, p, zij, tz, maxit = 10)
 }
 \arguments{
 \item{baseline}{A function take time t as argument and return the intensity

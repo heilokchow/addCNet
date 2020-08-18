@@ -93,7 +93,7 @@ tGenerate <- function(baseline, fs, fr, fg, n, p, zij, tz, maxit = 10) {
 
     if (iter < t_l) {
       t0 = t1
-      t1 = tz[iter]
+      t1 = tz[iter + 1]
     }
   }
 

@@ -108,8 +108,8 @@ nonParametric <- function(data, zij, n, p, tz) {
       if (co_t < length(tz)) {
         co_t = co_t + 1
         t1 = tz[co_t]
-        N_tz = matrix(0, nrow = n*(n-1), ncol = 1)
       }
+      N_tz = matrix(0, nrow = n*(n-1), ncol = 1)
     }
 
     if (z1 == 1) {

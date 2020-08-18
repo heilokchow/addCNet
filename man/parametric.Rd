@@ -4,7 +4,7 @@
 \alias{parametric}
 \title{Semi Parametric Estimate}
 \usage{
-parametric(data, zij, n, p, k = 0)
+parametric(data, zij, n, p, tz, k = 0)
 }
 \arguments{
 \item{data}{The whole dataset containing pairwise communications, the first column
@@ -18,6 +18,10 @@ transformation can be done using zProjection() function.}
 \item{n}{number of individuals in the whole network.}
 
 \item{p}{number of non-homogeneuous effect.}
+
+\item{tz}{Time points for non-homofily effects (ranging from (0,1)), the length of this
+vector should equal to the 4th dimension of zij which reflect the non-homofily effect
+on or before those specific time points.}
 
 \item{k}{number of orthogonal time dependent covariates}
 }
