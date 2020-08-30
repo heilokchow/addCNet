@@ -29,7 +29,7 @@ on or before those specific time points.}
 \item{homo_coef}{List Individual's parameters' estimation}
 \item{homo_cov}{List Individual's parameters' covairance matrix}
 \item{nonhomo_coef}{List nonhomogeneous parameters' estimation}
-\item{nonhomo_sd}{List nonhomogeneous parameter's standard deviation}
+\item{nonhomo_cov}{List nonhomogeneous parameter's covariance estimation}
 }
 \description{
 This function allows you to do non parametric estimation for additive network model.

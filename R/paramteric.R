@@ -25,7 +25,7 @@
 #' \item{homo_coef}{List Individual's parameters' estimation}
 #' \item{homo_cov}{List Individual's parameters' covairance matrix}
 #' \item{nonhomo_coef}{List nonhomogeneous parameters' estimation}
-#' \item{nonhomo_sd}{List nonhomogeneous parameter's standard deviation}
+#' \item{nonhomo_cov}{List nonhomogeneous parameter's covariance estimation}
 #'
 #' @export
 
@@ -119,14 +119,14 @@ parametric <- function(data, zij, n, p, tz, k = 0) {
   P1a = solve(t(temp) %*% temp) %*% t(temp)
 
   N_tz1 = matrix(0, nrow = n*(n-1), ncol = n2)
-  N_tz2 = matrix(0, nrow = n*(n-1), ncol = n2)
+  N_tz2 = matrix(0, nrow = n*(n-1), ncol = n2^2)
 
   count1 = array(0, c(p*n2, p*n2))
   count2 = matrix(0, nrow = p*n2, ncol = 1)
-  count3 = array(0, c(p, p, n2))
+  count3 = array(0, c(p*n2, p*n2))
 
   theta = matrix(0, nrow = p, ncol = n2)
-  theta_sd = matrix(0, nrow = p, ncol = n2)
+  theta_cov = array(0, c(p*n2, p*n2))
 
   t0 = 0
   co_t = 1
@@ -150,7 +150,10 @@ parametric <- function(data, zij, n, p, tz, k = 0) {
     if (t_norm[i] < t1) {
       for (i1 in seq_len(n2)) {
         N_tz1[z3, i1] = N_tz1[z3, i1] + F_poly(k1, t_norm[i], i1)
-        N_tz2[z3, i1] = N_tz2[z3, i1] + F_poly(k1, t_norm[i], i1) * F_poly(k1, t_norm[i], i1)
+        for (j1 in i1:n2) {
+          idx = (i1-1)*n2+j1
+          N_tz2[z3, idx] = N_tz2[z3, idx] + F_poly(k1, t_norm[i], i1) * F_poly(k1, t_norm[i], j1)
+        }
       }
     } else {
       count2_temp = matrix(NA, nrow = 0, ncol = 1)
@@ -159,6 +162,9 @@ parametric <- function(data, zij, n, p, tz, k = 0) {
       for (i1 in seq_len(n2)) {
         count2_temp = rbind(count2_temp, t(temp) %*% N_tz1[, i1])
         for (j1 in i1:n2) {
+          idx0 = (i1-1)*n2+j1
+          idx1 = (i1-1)*p+1
+          idx2 = (j1-1)*p+1
 
           F_poly_cov = function(x) {
             if (i1 == 1 && j1 == 1) {
@@ -169,16 +175,22 @@ parametric <- function(data, zij, n, p, tz, k = 0) {
           }
 
           if (i1 == j1) {
-            count1[((i1-1)*p+1):(i1*p), ((j1-1)*p+1):(j1*p)] = count1[((i1-1)*p+1):(i1*p), ((j1-1)*p+1):(j1*p)] +
+            count1[idx1:(idx1+p-1), idx2:(idx2+p-1)] = count1[idx1:(idx1+p-1), idx2:(idx2+p-1)] +
               temp1 * integrate(F_poly_cov, t0, t1)$value
+            count3[idx1:(idx1+p-1), idx2:(idx2+p-1)] = count3[idx1:(idx1+p-1), idx2:(idx2+p-1)] +
+              t(temp) %*% diag(N_tz2[, idx]) %*% temp
           } else {
-            count1[((i1-1)*p+1):(i1*p), ((j1-1)*p+1):(j1*p)] = count1[((i1-1)*p+1):(i1*p), ((j1-1)*p+1):(j1*p)] +
+            count1[idx1:(idx1+p-1), idx2:(idx2+p-1)] = count1[idx1:(idx1+p-1), idx2:(idx2+p-1)] +
               temp1 * integrate(F_poly_cov, t0, t1)$value
-            count1[((j1-1)*p+1):(j1*p), ((i1-1)*p+1):(i1*p)] = count1[((j1-1)*p+1):(j1*p), ((i1-1)*p+1):(i1*p)] +
+            count1[idx2:(idx2+p-1), idx1:(idx1+p-1)] = count1[idx2:(idx2+p-1), idx1:(idx1+p-1)] +
               temp1 * integrate(F_poly_cov, t0, t1)$value
+
+            count3[idx1:(idx1+p-1), idx2:(idx2+p-1)] = count3[idx1:(idx1+p-1), idx2:(idx2+p-1)] +
+              t(temp) %*% diag(N_tz2[, idx]) %*% temp
+            count3[idx2:(idx2+p-1), idx1:(idx1+p-1)] = count3[idx2:(idx2+p-1), idx1:(idx1+p-1)] +
+              t(temp) %*% diag(N_tz2[, idx]) %*% temp
           }
         }
-        count3[,, i1] = count3[,, i1] + t(temp) %*% diag(N_tz2[, i1]) %*% temp
       }
       count2[, ] = count2[, ] + count2_temp
       t0 = t1
@@ -187,7 +199,7 @@ parametric <- function(data, zij, n, p, tz, k = 0) {
         t1 = tz[co_t]
       }
       N_tz1 = matrix(0, nrow = n*(n-1), ncol = n2)
-      N_tz2 = matrix(0, nrow = n*(n-1), ncol = n2)
+      N_tz2 = matrix(0, nrow = n*(n-1), ncol = n2^2)
     }
 
     # Covariance Matrix Estimation
@@ -210,8 +222,9 @@ parametric <- function(data, zij, n, p, tz, k = 0) {
       inv_count = solve(count1, count2)
       for (z in seq_len(n2)) {
         theta[, z] = inv_count[((z-1)*p+1):(z*p),1]
-        # theta_sd[, z] = diag(inv_count %*% count3[,, z] %*% t(inv_count))
       }
+      inv_count1 = solve(count1)
+      theta_cov = inv_count1 %*% count3 %*% inv_count1
     }
   }
 
@@ -223,8 +236,8 @@ parametric <- function(data, zij, n, p, tz, k = 0) {
                                                    as.matrix(b1k[n:(2*n-2),]))),
                  homo_cov = sd1k,
                  nonhomo_coef = theta,
-                 nonhomo_sd = theta_sd^0.5,
-                 check = list(a = count1, b = count2))
+                 nonhomo_cov = theta_cov,
+                 check = list(x = count1, y = count3))
 
   output
 }
