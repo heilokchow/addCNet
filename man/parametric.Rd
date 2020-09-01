@@ -4,7 +4,7 @@
 \alias{parametric}
 \title{Semi Parametric Estimate}
 \usage{
-parametric(data, zij, n, p, tz, k = 0)
+parametric(data, zij, n, p, tz, k = 0, t_start = 0, t_end = 1)
 }
 \arguments{
 \item{data}{The whole dataset containing pairwise communications, the first column
@@ -24,12 +24,17 @@ vector should equal to the 4th dimension of zij which reflect the non-homofily e
 on or before those specific time points.}
 
 \item{k}{number of orthogonal time dependent covariates}
+
+\item{t_start}{start time in range of (0,1)}
+
+\item{t_end}{end time in range of (0,1)}
 }
 \value{
 \item{homo_coef}{List Individual's parameters' estimation}
 \item{homo_cov}{List Individual's parameters' covairance matrix}
 \item{nonhomo_coef}{List nonhomogeneous parameters' estimation}
 \item{nonhomo_cov}{List nonhomogeneous parameter's covariance estimation}
+\item{objective}{List of estimated parameters when t_start != 0 or t_end != 1}
 }
 \description{
 This function allows you to do non parametric estimation for additive network model.
