@@ -55,6 +55,7 @@ nonParametric <- function(data, zij, n, p, tz) {
 
   temp0 = xConstruct(n, zij)
   temp = cbind(temp0$intercept, temp0$x)
+  x1 = temp
   Pa = solve(t(temp) %*% temp) %*% t(temp)
 
   hash = rep(0, n^2)
@@ -83,6 +84,8 @@ nonParametric <- function(data, zij, n, p, tz) {
   SD_tz = matrix(0, nrow = p, ncol = 1)
   Bz = matrix(0, nrow = p, ncol = 100)
   SDz = matrix(0, nrow = p, ncol = 100)
+  T_t = 0
+  G_t = 0
 
   t0 = 0
   co_t = 1
@@ -100,7 +103,20 @@ nonParametric <- function(data, zij, n, p, tz) {
     } else {
       temp = temp0$zij[,,co_t]
       Pa_t = solve(t(temp) %*% temp) %*% t(temp)
+
       B_tz = B_tz + Pa_t %*% N_tz
+
+      T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_t)) - sum(temp %*% (Pa_t %*% N_tz))
+      Pa_lam = Pa %*% diag(c(N_tz))
+      Pa_tlam = Pa_t %*% diag(c(N_tz))
+      GF_1 = sum(x1 %*% Pa_lam) + sum(temp %*% Pa_tlam)
+      GF_2 = sum(x1 %*% ((Pa_lam %*% x1) %*% Pa)) +
+        sum(temp %*% ((Pa_tlam %*% temp) %*% Pa_t)) +
+        sum(x1 %*% ((Pa_lam %*% temp) %*% Pa_t)) +
+        sum(temp %*% ((Pa_tlam %*% x1) %*% Pa))
+
+      G_t = G_t + sum(N_tz) - 2 * GF_1 + GF_2
+
       for (j in 1:p) {
         SD_tz[j, 1] = SD_tz[j, 1] + sum(Pa_t[j,]^2*N_tz)
       }
@@ -110,6 +126,7 @@ nonParametric <- function(data, zij, n, p, tz) {
         t1 = tz[co_t]
       }
       N_tz = matrix(0, nrow = n*(n-1), ncol = 1)
+      cat("ERR\n")
     }
 
     if (z1 == 1) {
@@ -134,11 +151,27 @@ nonParametric <- function(data, zij, n, p, tz) {
       temp = temp0$zij[,,co_t]
       Pa_t = solve(t(temp) %*% temp) %*% t(temp)
       Bz[, co] = B_tz + Pa_t %*% N_tz
+
       for (j in 1:p) {
         SDz[j, co] = SD_tz[j, 1] + sum(Pa_t[j,]^2*N_tz)
       }
 
       co = co + 1
+      if (co == 100) {
+
+        T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_t)) - sum(temp %*% (Pa_t %*% N_tz))
+        Pa_lam = Pa %*% diag(c(N_tz))
+        Pa_tlam = Pa_t %*% diag(c(N_tz))
+        GF_1 = sum(x1 %*% Pa_lam) + sum(temp %*% Pa_tlam)
+        GF_2 = sum(x1 %*% ((Pa_lam %*% x1) %*% Pa)) +
+          sum(temp %*% ((Pa_tlam %*% temp) %*% Pa_t)) +
+          sum(x1 %*% ((Pa_lam %*% temp) %*% Pa_t)) +
+          sum(temp %*% ((Pa_tlam %*% x1) %*% Pa))
+
+        G_t = G_t + sum(N_tz) - 2 * GF_1 + GF_2
+        cat("HERE\n")
+
+      }
       if (co == 101) {
         break
       }
@@ -156,7 +189,16 @@ nonParametric <- function(data, zij, n, p, tz) {
                       incoming = rbind(matrix(SD1[2,], nrow = 1)^0.5,
                                        SD[(n+1):(2*n-1),]^0.5)),
        nonhomo_coefficients = Bz,
-       nonhomo_sd = SDz^0.5)
+       nonhomo_sd = SDz^0.5,
+       fit = list(T = T_t,
+                  G = G_t,
+                  G1 = GF_1,
+                  G2 = GF_2,
+                  x1 = x1,
+                  Pa_lam = Pa_lam,
+                  N_tz = N_tz,
+                  temp = temp,
+                  Pa_tlam = Pa_tlam))
 
   output
 }
