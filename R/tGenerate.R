@@ -64,7 +64,14 @@ tGenerate <- function(baseline, fs, fr, fg, n, p, zij, tz, maxit = 10) {
   t1 = tz[1]
 
   for (iter in seq_len(t_l)) {
-    zij_t = zProjection(zij[,,,iter])
+
+    if (length(dim(zij[,,,iter])) == 2) {
+      zij1 = array(zij[,,,iter], dim = c(dim(zij[,,,iter]), 1))
+    } else {
+      zij1 = zij[,,,iter]
+    }
+    zij_t = zProjection(zij1)
+
     for (i in 1:n) {
       for (j in 1:n) {
         if (i != j) {

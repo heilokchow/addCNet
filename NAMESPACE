@@ -3,4 +3,5 @@
 export(nonParametric)
 export(parametric)
 export(tGenerate)
+export(xConstruct)
 export(zProjection)
