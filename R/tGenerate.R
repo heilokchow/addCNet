@@ -55,7 +55,7 @@
 #'
 #' @export
 #'
-tGenerate <- function(baseline, fs, fr, fg, n, p, zij, tz, maxit = 10) {
+tGenerate <- function(baseline, fs, fr, fg, n, p, zij = NULL, tz, maxit = 10) {
 
   co = 1
   all_sim = list()
@@ -65,12 +65,14 @@ tGenerate <- function(baseline, fs, fr, fg, n, p, zij, tz, maxit = 10) {
 
   for (iter in seq_len(t_l)) {
 
-    if (length(dim(zij[,,,iter])) == 2) {
-      zij1 = array(zij[,,,iter], dim = c(dim(zij[,,,iter]), 1))
-    } else {
-      zij1 = zij[,,,iter]
+    if (!is.null(zij)) {
+      if (length(dim(zij[,,,iter])) == 2) {
+        zij1 = array(zij[,,,iter], dim = c(dim(zij[,,,iter]), 1))
+      } else {
+        zij1 = zij[,,,iter]
+      }
+      zij_t = zProjection(zij1)
     }
-    zij_t = zProjection(zij1)
 
     for (i in 1:n) {
       for (j in 1:n) {

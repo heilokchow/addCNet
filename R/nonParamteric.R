@@ -106,7 +106,7 @@ nonParametric <- function(data, zij, n, p, tz) {
 
       B_tz = B_tz + Pa_t %*% N_tz
 
-      T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_t)) - sum(temp %*% (Pa_t %*% N_tz))
+      T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_tz)) - sum(temp %*% (Pa_t %*% N_tz))
       Pa_lam = Pa %*% diag(c(N_tz))
       Pa_tlam = Pa_t %*% diag(c(N_tz))
       GF_1 = sum(x1 %*% Pa_lam) + sum(temp %*% Pa_tlam)
@@ -159,7 +159,7 @@ nonParametric <- function(data, zij, n, p, tz) {
       co = co + 1
       if (co == 100) {
 
-        T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_t)) - sum(temp %*% (Pa_t %*% N_tz))
+        T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_tz)) - sum(temp %*% (Pa_t %*% N_tz))
         Pa_lam = Pa %*% diag(c(N_tz))
         Pa_tlam = Pa_t %*% diag(c(N_tz))
         GF_1 = sum(x1 %*% Pa_lam) + sum(temp %*% Pa_tlam)
