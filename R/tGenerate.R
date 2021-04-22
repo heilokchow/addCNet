@@ -53,9 +53,10 @@
 #'
 #' result <- tGenerate(bs, fs, fr, fg, n, p, zij, maxit = 10) # maxit is different by cases
 #'
+#' @import stats
 #' @export
 #'
-tGenerate <- function(baseline, fs, fr, fg, n, p, zij = NULL, tz, maxit = 10) {
+tGenerate <- function(bs, fs, fr, fg, n, p, zij = NULL, tz, maxit = 10) {
 
   co = 1
   all_sim = list()
