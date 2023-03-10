@@ -4,7 +4,7 @@
 \alias{nonParametric}
 \title{Non Parametric Estimate}
 \usage{
-nonParametric(data, zij, n, p, tz)
+nonParametric(data, zij, n, p, tz = 1, h1 = 0.05)
 }
 \arguments{
 \item{data}{The whole dataset containing pairwise communications, the first column
@@ -22,6 +22,8 @@ transformation can be done using zProjection() function.}
 \item{tz}{Time points for non-homofily effects (ranging from (0,1)), the length of this
 vector should equal to the 4th dimension of zij which reflect the non-homofily effect
 on or before those specific time points.}
+
+\item{h1}{Bandwidth for calculate \eqn{\alpha(t)} and \eqn{\beta(t)}, default is 0.05.}
 }
 \value{
 \item{homo_coefficients}{List Individual's cumulative effect from scaled time range

@@ -29,7 +29,7 @@ xConstruct <- function(n, A = NULL) {
       } else {
         A1 = A[,,,iter]
       }
-      A1 = zProjection(A1)
+
       for (i in 1:n) {
         for (j in 1:n) {
           if (i != j) {

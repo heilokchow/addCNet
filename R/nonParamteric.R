@@ -60,7 +60,7 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
   N_tall = matrix(0, nrow = n*(n-1), ncol = 100)
   Nij = matrix(0, nrow = n, ncol = n)
 
-  temp = xConstruct1(n, zij)
+  temp = xConstruct(n, zij)
   if (p == 1) {
     P = cbind(temp$intercept, temp$x, matrix(temp$zij[,,1]))
   } else {

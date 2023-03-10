@@ -4,12 +4,9 @@
 \alias{tGenerate}
 \title{Generate Simulation Dataset}
 \usage{
-tGenerate(baseline, fs, fr, fg, n, p, zij, tz, maxit = 10)
+tGenerate(bs, fs, fr, fg, n, p, zij = NULL, tz, maxit = 10)
 }
 \arguments{
-\item{baseline}{A function take time t as argument and return the intensity
-at time t.}
-
 \item{fs}{A function takes two arguments (time, individual id) and return
 outgoing intensity.}
 
@@ -27,6 +24,9 @@ incoming intensity.}
 
 \item{maxit}{Maximum individual's intensity (default is 10), user should check
 carefully because it determines the performance of dataset generation}
+
+\item{baseline}{A function take time t as argument and return the intensity
+at time t.}
 }
 \value{
 \item{trial}{3 column dataframe, first column is the outgoing individual,

@@ -4,7 +4,7 @@
 \alias{xConstruct}
 \title{Projection and X creation}
 \usage{
-xConstruct(n, A)
+xConstruct(n, A = NULL)
 }
 \arguments{
 \item{n}{Sample size}

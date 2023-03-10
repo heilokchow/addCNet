@@ -4,7 +4,7 @@
 \alias{parametric}
 \title{Semi Parametric Estimate}
 \usage{
-parametric(data, zij, n, p, tz, k = 0, t_start = 0, t_end = 1)
+parametric(data, zij = NULL, n, p, tz, k = 0, t_start = 0, t_end = 1)
 }
 \arguments{
 \item{data}{The whole dataset containing pairwise communications, the first column
