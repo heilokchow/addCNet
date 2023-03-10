@@ -14,6 +14,7 @@
 #' @param tz Time points for non-homofily effects (ranging from (0,1)), the length of this
 #' vector should equal to the 4th dimension of zij which reflect the non-homofily effect
 #' on or before those specific time points.
+#' @param h1 Bandwidth for calculate \eqn{\alpha(t)} and \eqn{\beta(t)}, default is 0.05.
 #'
 #' @return
 #' \item{homo_coefficients}{List Individual's cumulative effect from scaled time range
@@ -27,36 +28,46 @@
 #'
 #' @export
 
-nonParametric <- function(data, zij, n, p, tz) {
+
+nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
 
   dim_check = dim(zij)
   n1 = ncol(data)
   t = nrow(data)
 
-  if (n1 < 3 || t < 1) {
-    stop("Please check the format of data")
-  }
-
-  if (n != dim_check[1] || n != dim_check[2] || p != dim_check[3]) {
-    stop("Please check whether the format of zij is correct or entered n, p is correct")
-  }
-
-  if (min(data[,1:2]) != 1 || max(data[,1:2]) != n) {
-    stop("Please check whether the format of data is correct or entered n is correct")
-  }
-
-  if (!is.numeric(sum(data[,n1]))) {
-    stop("Please check whether the time stamp is of numeric format")
-  }
-
   t_max <- (data[t, n1] - data[1, n1])
   t_norm <- (data[, n1] - data[1, n1][[1]]) / t_max[[1]]
   t_sep_t = seq(0.01, 1, 0.01)
 
-  temp0 = xConstruct(n, zij)
-  temp = cbind(temp0$intercept, temp0$x)
-  x1 = temp
-  Pa = solve(t(temp) %*% temp) %*% t(temp)
+  # if (length(tz) != dim_check[4]) {
+  #   stop("dimension not match!")
+  # }
+
+  itz = c()
+  for (i in seq_len(length(tz))) {
+    itz = c(itz, which.max(tz[i] < t_sep_t))
+  }
+  cat(itz)
+
+  B = matrix(0, nrow = (2*n-1)+p, ncol = 100)
+  b = matrix(0, nrow = (2*n-1)+p, ncol = 100)
+  V = matrix(0, nrow = (2*n-1)+p, ncol = (2*n-1)+p)
+  B1 = matrix(0, nrow = 2, ncol = 100)
+  b1 = matrix(0, nrow = 2, ncol = 100)
+  SDo = matrix(0, nrow = n, ncol = 100)
+  SDi = matrix(0, nrow = n, ncol = 100)
+  N_t = matrix(0, nrow = n*(n-1), ncol = 1)
+  N_tall = matrix(0, nrow = n*(n-1), ncol = 100)
+  Nij = matrix(0, nrow = n, ncol = n)
+
+  temp = xConstruct1(n, zij)
+  if (p == 1) {
+    P = cbind(temp$intercept, temp$x, matrix(temp$zij[,,1]))
+  } else {
+    P = cbind(temp$intercept, temp$x, temp$zij[,,1])
+  }
+  Pa = solve(t(P) %*% P) %*% t(P)
+  Va = t(P) %*% P
 
   hash = rep(0, n^2)
   co = 1
@@ -71,134 +82,81 @@ nonParametric <- function(data, zij, n, p, tz) {
     }
   }
 
-  N_t = matrix(0, nrow = n*(n-1), ncol = 1)
-  B = matrix(0, nrow = (2*n-1), ncol = 100)
-  SD = matrix(0, nrow = (2*n-1), ncol = 100)
-
-  B1 = matrix(0, nrow = 2, ncol = 100)
-  SD1 = matrix(0, nrow = 2, ncol = 100)
-  N1 = matrix(0, nrow = 2, ncol = 1)
-
-  N_tz = matrix(0, nrow = n*(n-1), ncol = 1)
-  B_tz = matrix(0, nrow = p, ncol = 1)
-  SD_tz = matrix(0, nrow = p, ncol = 1)
-  Bz = matrix(0, nrow = p, ncol = 100)
-  SDz = matrix(0, nrow = p, ncol = 100)
-  T_t = 0
-  G_t = 0
-
-  t0 = 0
-  co_t = 1
-  t1 = tz[co_t]
-
   co = 1
+  co1 = 1
   for (i in seq_len(t)) {
     z1 = data[i, 1]
     z2 = data[i, 2]
     z3 = hash[(z1-1)*n+z2]
     N_t[z3, 1] = N_t[z3, 1] + 1
+    Nij[z1, z2] = Nij[z1, z2] + 1
 
-    if (t_norm[i] < t1) {
-      N_tz[z3, 1] = N_tz[z3, 1] + 1
-    } else {
-      temp = temp0$zij[,,co_t]
-      Pa_t = solve(t(temp) %*% temp) %*% t(temp)
-
-      B_tz = B_tz + Pa_t %*% N_tz
-
-      T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_tz)) - sum(temp %*% (Pa_t %*% N_tz))
-      Pa_lam = Pa %*% diag(c(N_tz))
-      Pa_tlam = Pa_t %*% diag(c(N_tz))
-      GF_1 = sum(x1 %*% Pa_lam) + sum(temp %*% Pa_tlam)
-      GF_2 = sum(x1 %*% ((Pa_lam %*% x1) %*% Pa)) +
-        sum(temp %*% ((Pa_tlam %*% temp) %*% Pa_t)) +
-        sum(x1 %*% ((Pa_lam %*% temp) %*% Pa_t)) +
-        sum(temp %*% ((Pa_tlam %*% x1) %*% Pa))
-
-      G_t = G_t + sum(N_tz) - 2 * GF_1 + GF_2
-
-      for (j in 1:p) {
-        SD_tz[j, 1] = SD_tz[j, 1] + sum(Pa_t[j,]^2*N_tz)
-      }
-      t0 = t1
-      if (co_t < length(tz)) {
-        co_t = co_t + 1
-        t1 = tz[co_t]
-      }
-      N_tz = matrix(0, nrow = n*(n-1), ncol = 1)
-      cat("ERR\n")
-    }
-
-    if (z1 == 1) {
-      N1[1, 1] = N1[1, 1] + 1
-    }
-
-    if (z2 == 1) {
-      N1[2, 1] = N1[2, 1] + 1
+    Ntemp = matrix(0, nrow = n*(n-1), ncol = 1)
+    Ntemp[z3] = 1
+    Patemp = Pa %*% Ntemp
+    for (j in 1:100) {
+      N_tall[z3, j] = N_tall[z3, j] + 1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1)
+      b[, j] = b[, j] + Patemp * 1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1)
     }
 
     if (t_norm[i] >= t_sep_t[co]) {
-      B[, co] = Pa %*% N_t
+      if (co == 1) {
+        B[, co] = Pa %*% N_t
+      } else {
+        B[, co] = B[, co - 1] + Pa %*% N_t
+      }
       B1[1, co] = -sum(B[2:n, co])
       B1[2, co] = -sum(B[(n+1):(2*n-1), co])
-
-      for (j in 1:(2*n-1)) {
-        SD[j, co] = sum(Pa[j,]^2*N_t)
-      }
-      SD1[1, co] = N1[1, 1] / n^2
-      SD1[2, co] = N1[2, 1] / n^2
-
-      temp = temp0$zij[,,co_t]
-      Pa_t = solve(t(temp) %*% temp) %*% t(temp)
-      Bz[, co] = B_tz + Pa_t %*% N_tz
-
-      for (j in 1:p) {
-        SDz[j, co] = SD_tz[j, 1] + sum(Pa_t[j,]^2*N_tz)
-      }
-
+      SDo[, co] = 1/n^2 * colSums(Nij)
+      SDi[, co] = 1/n^2 * rowSums(Nij)
       co = co + 1
-      if (co == 100) {
+      V = V + Va
 
-        T_t = T_t + sum(N_tz) - sum(x1 %*% (Pa %*% N_tz)) - sum(temp %*% (Pa_t %*% N_tz))
-        Pa_lam = Pa %*% diag(c(N_tz))
-        Pa_tlam = Pa_t %*% diag(c(N_tz))
-        GF_1 = sum(x1 %*% Pa_lam) + sum(temp %*% Pa_tlam)
-        GF_2 = sum(x1 %*% ((Pa_lam %*% x1) %*% Pa)) +
-          sum(temp %*% ((Pa_tlam %*% temp) %*% Pa_t)) +
-          sum(x1 %*% ((Pa_lam %*% temp) %*% Pa_t)) +
-          sum(temp %*% ((Pa_tlam %*% x1) %*% Pa))
-
-        G_t = G_t + sum(N_tz) - 2 * GF_1 + GF_2
-        cat("HERE\n")
-
+      if (co == itz[co1]) {
+        co1 = co1 + 1
+        if (p == 1) {
+          P = cbind(temp$intercept, temp$x, matrix(temp$zij[,,co1]))
+        } else {
+          P = cbind(temp$intercept, temp$x, temp$zij[,,co1])
+        }
+        Pa = solve(t(P) %*% P) %*% t(P)
+        Va = t(P) %*% P
       }
-      if (co == 101) {
-        break
-      }
+
+      N_t = N_t * 0
+    }
+    if (co == 101) {
+      break
     }
   }
 
-  output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
-                                outgoing = rbind(matrix(B1[1,], nrow = 1),
-                                                 B[2:n,]),
-                                incoming = rbind(matrix(B1[2,], nrow = 1),
-                                                 B[(n+1):(2*n-1),])),
-       homo_sd = list(baseline = matrix(SD[1,], nrow = 1),
-                      outgoing = rbind(matrix(SD1[1,], nrow = 1)^0.5,
-                                       SD[2:n,]^0.5),
-                      incoming = rbind(matrix(SD1[2,], nrow = 1)^0.5,
-                                       SD[(n+1):(2*n-1),]^0.5)),
-       nonhomo_coefficients = Bz,
-       nonhomo_sd = SDz^0.5,
-       fit = list(T = T_t,
-                  G = G_t,
-                  G1 = GF_1,
-                  G2 = GF_2,
-                  x1 = x1,
-                  Pa_lam = Pa_lam,
-                  N_tz = N_tz,
-                  temp = temp,
-                  Pa_tlam = Pa_tlam))
+  b1[1, ] = - colSums(b[2:n,])
+  b1[2, ] = - colSums(b[(n+1):(2*n-1),])
 
-  output
+  if (!is.null(zij)) {
+    output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
+                                            outgoing = rbind(matrix(B1[1,], nrow = 1),
+                                                             B[2:n,]),
+                                            incoming = rbind(matrix(B1[2,], nrow = 1),
+                                                             B[(n+1):(2*n-1),]),
+                                            sdout = SDo,
+                                            sdinc = SDi),
+                   nonhomo_coefficients = B[(2*n):(2*n-1+p),],
+                   ab = list(baseline = matrix(b[1,], nrow = 1),
+                             outgoing = rbind(matrix(b1[1,], nrow = 1),
+                                              b[2:n,]),
+                             incoming = rbind(matrix(b1[2,], nrow = 1),
+                                              b[(n+1):(2*n-1),])),
+                   th = b[(2*n):(2*n-1+p),],
+                   V = V/100)
+  } else {
+    output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
+                                            outgoing = rbind(matrix(B1[1,], nrow = 1),
+                                                             B[2:n,]),
+                                            incoming = rbind(matrix(B1[2,], nrow = 1),
+                                                             B[(n+1):(2*n-1),])),
+                   V = V/100)
+  }
+  return(output)
 }
+
