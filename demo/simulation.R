@@ -4,9 +4,14 @@ library(latex2exp)
 
 # Functions ---------------------------------------------------------------
 
-bs <- function(t) {1}
-fs <- function(t, i) {0.04*(i-(n+1)/2) + 0.04*(i-(n+1)/2)*sin(2*pi*t)} # cautious about negative hazard
-fr <- function(t, i) {0.04*(i-(n+1)/2) + 0.04*(i-(n+1)/2)*cos(2*pi*t)}
+n = 50
+p = 1
+
+t_sep_t = seq(0.01, 1, 0.01)
+
+bs <- function(t) {2}
+fs <- function(t, i) {0.04*(i-(n+1)/2)*sin(2*pi*t)} # cautious about negative hazard
+fr <- function(t, i) {0.04*(i-(n+1)/2)*cos(2*pi*t)}
 # fs <- function(t, i) {0.02*(i-(n+1)/2)}
 # fr <- function(t, i) {0.02*(i-(n+1)/2)}
 fg <- function(t, k) {0.2*k}
@@ -41,12 +46,6 @@ fgI1 = Vectorize(fgI)
 
 # Simulation begin --------------------------------------------------------
 
-
-n = 30
-p = 1
-
-t_sep_t = seq(0.01, 1, 0.01)
-
 trueBo = matrix(0, nrow = n, ncol = 100)
 trueBi = matrix(0, nrow = n, ncol = 100)
 
@@ -57,12 +56,24 @@ for (i in 1:n) {
   }
 }
 
+truebo = matrix(0, nrow = n, ncol = 100)
+truebi = matrix(0, nrow = n, ncol = 100)
+
+for (i in 1:n) {
+  for (j in 1:100) {
+    truebo[i, j] = fs(t_sep_t[j], i)
+    truebi[i, j] = fr(t_sep_t[j], i)
+  }
+}
+
+
 # Constructing Non-homofily effect
 zij <- array(rnorm(n*n), c(n, n, 1, 1))
 
 all_result = list()
 all_result_zval = list()
 all_result_kh = list()
+all_result_kh_zval = list()
 
 set.seed(1)
 for (i in 1:100) {
@@ -74,6 +85,8 @@ for (i in 1:100) {
   all_result_zval[[i]] = rbind((np0$homo_coefficients$outgoing - trueBo) / sqrt(np0$homo_coefficients$sdout),
                                (np0$homo_coefficients$incoming - trueBi) / sqrt(np0$homo_coefficients$sdinc))
   all_result_kh[[i]] = rbind(np0$ab$outgoing, np0$ab$incoming, np0$th)
+  all_result_kh_zval[[i]] = rbind((np0$ab$outgoing - truebo) / sqrt(np0$ab$sdout),
+                                  (np0$ab$incoming - truebi) / sqrt(np0$ab$sdinc))
 }
 
 all_mean = array(0, c(2*n + p, 100, 100))
@@ -94,7 +107,7 @@ rekhsu = apply(all_mean_kh, c(1, 2), quantile, probs = 0.975, na.rm = TRUE)
 # Plot --------------------------------------------------------------------
 
 
-q = 30
+q = 50
 p1 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fsI1, args = list(q = q), color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
@@ -110,7 +123,7 @@ ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fs, args = lis
   theme_bw()
 
 
-q = 60
+q = 100
 p2 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p2, aes(x = x, y = y)) + geom_line() + stat_function(fun = frI1, args = list(q = q-n), color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
@@ -145,12 +158,33 @@ zon = c()
 zin = c()
 
 for (i in 1:100) {
-  zon = c(zon, all_result_zval[[i]][n,][which(abs(all_result_zval[[i]][n,]) < Inf)])
-  zin = c(zin, all_result_zval[[i]][2*n,][which(abs(all_result_zval[[i]][2*n,]) < Inf)])
+  zon = c(zon, all_result_zval[[i]][n/2,][which(abs(all_result_zval[[i]][n/2,]) < Inf)])
+  zin = c(zin, all_result_zval[[i]][n*3/2,][which(abs(all_result_zval[[i]][n*3/2,]) < Inf)])
 }
+#
+# for (i in 1:100) {
+#   zon = c(zon, all_result_zval[[i]][n,][which(abs(all_result_zval[[i]][n,]) < Inf)])
+#   zin = c(zin, all_result_zval[[i]][2*n,][which(abs(all_result_zval[[i]][2*n,]) < Inf)])
+# }
 
-hist(zon, seq(-7, 7, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\A}_n$'))
+hist(zon, seq(-7, 7, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\A}_{n/2}$'))
 curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
 
-hist(zin, seq(-7, 7, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\B}_n$'))
+hist(zin, seq(-7, 7, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\B}_{n/2}$'))
+curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
+
+
+
+zons = c()
+zins = c()
+
+for (i in 1:100) {
+  zons = c(zons, all_result_kh_zval[[i]][n/2, 30:70])
+  zins = c(zins, all_result_kh_zval[[i]][n*3/2, 30:70])
+}
+
+hist(zons, seq(-7, 7, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\alpha}_{n/2}$'))
+curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
+
+hist(zins, seq(-8, 8, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\beta}_{n/2}$'))
 curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)

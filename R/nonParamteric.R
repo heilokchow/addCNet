@@ -56,8 +56,11 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
   b1 = matrix(0, nrow = 2, ncol = 100)
   SDo = matrix(0, nrow = n, ncol = 100)
   SDi = matrix(0, nrow = n, ncol = 100)
+  SDoa = matrix(0, nrow = n, ncol = 100)
+  SDib = matrix(0, nrow = n, ncol = 100)
   N_t = matrix(0, nrow = n*(n-1), ncol = 1)
   N_tall = matrix(0, nrow = n*(n-1), ncol = 100)
+  N_tallM = array(0, c(n, n, 100))
   Nij = matrix(0, nrow = n, ncol = n)
 
   temp = xConstruct(n, zij)
@@ -96,6 +99,7 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
     Patemp = Pa %*% Ntemp
     for (j in 1:100) {
       N_tall[z3, j] = N_tall[z3, j] + 1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1)
+      N_tallM[z1, z2, j] = N_tallM[z1, z2, j] + (1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1))^2
       b[, j] = b[, j] + Patemp * 1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1)
     }
 
@@ -133,6 +137,11 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
   b1[1, ] = - colSums(b[2:n,])
   b1[2, ] = - colSums(b[(n+1):(2*n-1),])
 
+  for (j in 1:100) {
+    SDoa[, j] = 1/n^2 * colSums(N_tallM[,,j])
+    SDib[, j] = 1/n^2 * rowSums(N_tallM[,,j])
+  }
+
   if (!is.null(zij)) {
     output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
                                             outgoing = rbind(matrix(B1[1,], nrow = 1),
@@ -146,7 +155,9 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
                              outgoing = rbind(matrix(b1[1,], nrow = 1),
                                               b[2:n,]),
                              incoming = rbind(matrix(b1[2,], nrow = 1),
-                                              b[(n+1):(2*n-1),])),
+                                              b[(n+1):(2*n-1),]),
+                             sdout = SDoa,
+                             sdinc = SDib),
                    th = b[(2*n):(2*n-1+p),],
                    V = V/100)
   } else {
