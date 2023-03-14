@@ -52,14 +52,14 @@ p = 1
 
 bs <- function(t) {2}
 fs <- function(t, i) {
-  if (i < n/2) return(sin(2*pi*t)/2 * 0)
-  if (i == n/2) return(0)
-  if (i > n/2) return(-sin(2*pi*t)/2 * 0)
+  if (i < n/3) return(sin(2*pi*t)/2*1)
+  if (i > 2*n/3) return(-sin(2*pi*t)/2*1)
+  return(0)
 }
 fr <- function(t, i) {
-  if (i < n/2) return(sin(2*pi*t)/2)
-  if (i == n/2) return(0)
-  if (i > n/2) return(-sin(2*pi*t)/2)
+  if (i < n/3) return(sin(2*pi*t)/2)
+  if (i > 2*n/3) return(-sin(2*pi*t)/2)
+  return(0)
 }
 fg <- function(t, k) {0.2*k}
 
@@ -128,8 +128,12 @@ rep = 100
 for (i in 1:rep) {
   cat(i, '\n')
   set.seed(i)
-  result <- tGenerate(bs, fs, fr, fg, n, 1, array(zij, c(n,n,p,1)), tz = 1, maxit = 20)
-  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.05)
+
+  # Generate Data
+  result <- tGenerateC(n, Zij = array(zij, c(n,n,p)))
+
+  # Model Run
+  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.05, test = 0)
 
   all_result[[i]] = rbind(np0$homo_coefficients$outgoing, np0$homo_coefficients$incoming, np0$nonhomo_coefficients)
   all_result_var[[i]] = rbind(np0$homo_coefficients$sdout, np0$homo_coefficients$sdinc)
@@ -178,7 +182,7 @@ ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fs, args = lis
   theme_bw()
 
 
-q = 31
+q = 51
 p2 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p2, aes(x = x, y = y)) + geom_line() + stat_function(fun = frI1, args = list(q = q-n), color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
@@ -253,20 +257,37 @@ curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
 
 ap = 0
 sall = c()
+sall1 = c()
 for (i in 1:rep) {
-  # out = directTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,],
-  #                  all_result_kh[[i]][(n+1):(2*n),], all_result_kh_var[[i]][(n+1):(2*n),], seq(10,90,10))
-  out = degreeHTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,], seq(10,90,10))
+  out = directTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,],
+                   all_result_kh[[i]][(n+1):(2*n),], all_result_kh_var[[i]][(n+1):(2*n),], seq(10,90,10))
+  # out = degreeHTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,], 10)
 
   sall = c(sall, out[[1]])
+  sall1 = c(sall1, sum(all_result_kh[[i]][(1:n),60]^2/all_result_kh_var[[i]][(1:n),60]-1.05)/sqrt(2*n*1.14))
   ap = ap + out[[2]]
+}
+
+hist(all_result_kh[[i]][1:n,50]/sqrt(all_result_kh_var[[i]][1:n,50]),
+     seq(-5, 5, 0.5), ylim = c(0, 0.8), freq = FALSE, main = "", xlab = TeX('$T_d$'))
+curve(dnorm, xlab = "", ylab = "", add = T, lwd = 2.0)
+
+mean((all_result_kh[[i]][1:n,]/sqrt(all_result_kh_var[[i]][1:n,]))^2)
+
+test = c()
+for (i in 1:100) {
+  test = c(test, mean(all_result_kh_zval[[i]][(n+1):(2*n),]^2))
+
 }
 
 # Under Null
 g = function(x) {9*pnorm(x)^8*dnorm(x)}
+g = function(x) {5*pnorm(x)^4*dnorm(x)}
 h = Vectorize(g)
-hist(sall, seq(-1, 6, 0.5), ylim = c(0, 0.8), freq = FALSE, main = "", xlab = TeX('$T_d$'))
+
+hist(sall, seq(-6, 6, 0.5), ylim = c(0, 0.8), freq = FALSE, main = "", xlab = TeX('$T_d$'))
 curve(h, xlab = "", ylab = "", add = T, lwd = 2.0)
+curve(dnorm, xlab = "", ylab = "", add = T, lwd = 2.0)
 qnorm(0.95^(1/9))
 
 
@@ -277,8 +298,11 @@ de_test = c(de_test, list(a25 = list(estimate = all_result_kh, var = all_result_
 de_test = c(de_test, list(a125 = list(estimate = all_result_kh, var = all_result_kh_var)))
 de_test = c(de_test, list(a375 = list(estimate = all_result_kh, var = all_result_kh_var)))
 
+# 5-0-5
 # null 100 25 12.5 375 50
-# 9 100 41 13 91 100
+#        9 100 41 13 91 100
 
+# 3-3-3
+# 12
 plot(seq(0,0.5,0.125), c(0.09, 0.13, 0.41, 0.91, 1), ylim = c(0, 1), ylab = "Power", xlab = expression(italic(C[1])))
 lines(seq(0,0.5,0.125), c(0.09, 0.13, 0.41, 0.91, 1))

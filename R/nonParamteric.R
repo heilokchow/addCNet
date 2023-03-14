@@ -16,6 +16,10 @@
 #' on or before those specific time points.
 #' @param h1 Bandwidth for calculate \eqn{\alpha(t)} and \eqn{\beta(t)}, default is 0.05.
 #'
+#' @importFrom Rcpp evalCpp
+#' @import RcppEigen
+#' @useDynLib addCNet, .registration = TRUE
+#'
 #' @return
 #' \item{homo_coefficients}{List Individual's cumulative effect from scaled time range
 #' [0,1]. The parameters are estimated at (0.01, 0.02, ..., 1)}
@@ -29,7 +33,13 @@
 #' @export
 
 
-nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
+nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
+
+  t1 = Sys.time()
+
+  t12 = 0
+  t23 = 0
+  t34 = 0
 
   dim_check = dim(zij)
   n1 = ncol(data)
@@ -63,14 +73,23 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
   N_tallM = array(0, c(n, n, 100))
   Nij = matrix(0, nrow = n, ncol = n)
 
+  t2 = Sys.time()
   temp = xConstruct(n, zij)
   if (p == 1) {
     P = cbind(temp$intercept, temp$x, matrix(temp$zij[,,1]))
   } else {
     P = cbind(temp$intercept, temp$x, temp$zij[,,1])
   }
-  Pa = solve(t(P) %*% P) %*% t(P)
-  Va = t(P) %*% P
+  t3 = Sys.time()
+  if (test == 0) {
+    VP = pvp(P)
+    Va = VP$Va
+    Pa = VP$Pa
+  } else {
+    Va = t(P) %*% P
+    Pa = solve(Va) %*% t(P)
+  }
+  t4 = Sys.time()
 
   hash = rep(0, n^2)
   co = 1
@@ -88,20 +107,16 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
   co = 1
   co1 = 1
   for (i in seq_len(t)) {
+
     z1 = data[i, 1]
     z2 = data[i, 2]
     z3 = hash[(z1-1)*n+z2]
     N_t[z3, 1] = N_t[z3, 1] + 1
     Nij[z1, z2] = Nij[z1, z2] + 1
 
-    Ntemp = matrix(0, nrow = n*(n-1), ncol = 1)
-    Ntemp[z3] = 1
-    Patemp = Pa %*% Ntemp
-    for (j in 1:100) {
-      N_tall[z3, j] = N_tall[z3, j] + 1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1)
-      N_tallM[z1, z2, j] = N_tallM[z1, z2, j] + (1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1))^2
-      b[, j] = b[, j] + Patemp * 1/h1*dnorm((t_norm[i] - t_sep_t[j])/h1, 0, 1)
-    }
+    Patemp = Pa[, z3]
+
+    splinecalc(Patemp, N_tall, N_tallM, b, n, nrow(b), z1, z2, z3, h1, t_norm[i], t_sep_t)
 
     if (t_norm[i] >= t_sep_t[co]) {
       if (co == 1) {
@@ -123,8 +138,8 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
         } else {
           P = cbind(temp$intercept, temp$x, temp$zij[,,co1])
         }
-        Pa = solve(t(P) %*% P) %*% t(P)
         Va = t(P) %*% P
+        Pa = solve(Va) %*% t(P)
       }
 
       N_t = N_t * 0
@@ -132,7 +147,12 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
     if (co == 101) {
       break
     }
+
   }
+
+  t12 = t12 + t2 - t1
+  t23 = t23 + t3 - t2
+  t34 = t34 + t4 - t3
 
   b1[1, ] = - colSums(b[2:n,])
   b1[2, ] = - colSums(b[(n+1):(2*n-1),])
@@ -159,7 +179,8 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05) {
                              sdout = SDoa,
                              sdinc = SDib),
                    th = b[(2*n):(2*n-1+p),],
-                   V = V/100)
+                   V = V/100,
+                   ts = c(t12, t23, t34))
   } else {
     output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
                                             outgoing = rbind(matrix(B1[1,], nrow = 1),
