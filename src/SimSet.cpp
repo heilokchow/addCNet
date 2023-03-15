@@ -8,8 +8,8 @@ using namespace Rcpp;
 
 #define PI 3.14159265
 
-double fs(double t, const double& shift, int i, const int &n);
-double fr(double t, const double& shift, int i, const int &n);
+double fs(double t, const double& shift1, int i, const int &n);
+double fr(double t, const double& shift2, int i, const int &n);
 double fg(double t);
 
 std::mt19937 gen(123);

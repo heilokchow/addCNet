@@ -52,8 +52,8 @@ p = 1
 
 bs <- function(t) {2}
 fs <- function(t, i) {
-  if (i < n/3) return(sin(2*pi*t)/2*1)
-  if (i > 2*n/3) return(-sin(2*pi*t)/2*1)
+  if (i < n/3) return(sin(2*pi*t)/2*0)
+  if (i > 2*n/3) return(-sin(2*pi*t)/2*0)
   return(0)
 }
 fr <- function(t, i) {
@@ -96,6 +96,8 @@ fgI1 = Vectorize(fgI)
 trueBo = matrix(0, nrow = n, ncol = 100)
 trueBi = matrix(0, nrow = n, ncol = 100)
 
+trueBoi = rbind(trueBo, trueBi)
+
 for (i in 1:n) {
   for (j in 1:100) {
     trueBo[i, j] = fsI1(t_sep_t[j], i)
@@ -113,9 +115,9 @@ for (i in 1:n) {
   }
 }
 
+trueboi = rbind(truebo, truebi)
 
 # Constructing Non-homofily effect
-zij <- array(rnorm(n*n), c(n, n, 1, 1))
 
 all_result = list()
 all_result_var = list()
@@ -124,13 +126,14 @@ all_result_kh = list()
 all_result_kh_var = list()
 all_result_kh_zval = list()
 
-rep = 100
+zij <- array(rnorm(n*n), c(n, n, 1, 1))
+rep = 300
 for (i in 1:rep) {
   cat(i, '\n')
   set.seed(i)
 
   # Generate Data
-  result <- tGenerateC(n, Zij = array(zij, c(n,n,p)))
+  result <- tGenerateC(n, shift1 = 1, shift2 = 0, Zij = array(zij, c(n,n,p)))
 
   # Model Run
   np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.05, test = 0)
@@ -166,7 +169,7 @@ rekhsu = apply(all_mean_kh, c(1, 2), quantile, probs = 0.975, na.rm = TRUE)
 
 # ABT plot ----------------------------------------------------------------
 
-q = 1
+q = 3
 p1 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fsI1, args = list(q = q), color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
@@ -182,7 +185,7 @@ ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fs, args = lis
   theme_bw()
 
 
-q = 51
+q = n+3
 p2 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p2, aes(x = x, y = y)) + geom_line() + stat_function(fun = frI1, args = list(q = q-n), color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
@@ -212,6 +215,87 @@ ggplot(p3, aes(x = x, y = y)) + geom_line() + stat_function(fun = function(x) {0
   xlab(expression(italic("t"))) +
   ylab(TeX('$\\widehat{\\theta}_{1}$(t)')) +
   theme_bw()
+
+# Not use
+p4 = data.frame(x = rep(seq(0.01,0.99,0.01), n),
+                y = c(t(reskhMean[1:n,1:99])),
+                id = sort(rep(seq(1,n,1), 99)),
+                group = c(rep("1", 99*16), rep("2", 99*17), rep("3", 99*17)))
+
+ggplot(p4, aes(x = x, y = y, group = id)) + geom_line()
+
+# Not use
+p5 = data.frame(x = rep(seq(0.01,0.99,0.01), 3),
+                yl = c(apply(rekhsl[1:15,1:99], 2, mean),
+                       apply(rekhsl[16:33,1:99], 2, mean),
+                       apply(rekhsl[34:50,1:99], 2, mean)),
+                yu = c(apply(rekhsu[1:15,1:99], 2, mean),
+                       apply(rekhsu[16:33,1:99], 2, mean),
+                       apply(rekhsu[34:50,1:99], 2, mean)),
+                group = c(rep("1", 99), rep("2", 99), rep("3", 99)))
+
+ggplot(p5, aes(x = x, group = group, fill = group)) +
+  geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.5, linetype = "dashed") +
+  scale_fill_manual(name = "", values=c("#619CFF", "red", "green")) +
+  xlab(expression(italic("t"))) +
+  ylab(TeX('$\\widehat{\\alpha}$(t)'))
+
+p6 = data.frame(x = rep(seq(0.01,0.99,0.01), 3),
+                yl = c(apply(reskhMean[1:15,1:99], 2, min),
+                       apply(reskhMean[16:33,1:99], 2, min),
+                       apply(reskhMean[34:50,1:99], 2, min)),
+                yu = c(apply(reskhMean[1:15,1:99], 2, max),
+                       apply(reskhMean[16:33,1:99], 2, max),
+                       apply(reskhMean[34:50,1:99], 2, max)),
+                group = c(rep("1", 99), rep("2", 99), rep("3", 99)))
+
+ggplot(p6, aes(x = x, group = group, fill = group)) +
+  geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.5, linetype = "dashed") +
+  scale_fill_manual(name = "", values=c("#619CFF", "red", "green")) +
+  xlab(expression(italic("t"))) +
+  ylab(TeX('$\\widehat{\\alpha}$(t)')) +
+  theme_bw()
+
+
+p7 = data.frame(x = rep(seq(0.01,0.99,0.01), 3),
+                yl = c(apply(reskhMean[(n+1:15),1:99], 2, min),
+                       apply(reskhMean[(n+16:33),1:99], 2, min),
+                       apply(reskhMean[(n+34:50),1:99], 2, min)),
+                yu = c(apply(reskhMean[(n+1:15),1:99], 2, max),
+                       apply(reskhMean[(n+16:33),1:99], 2, max),
+                       apply(reskhMean[(n+34:50),1:99], 2, max)),
+                group = c(rep("1", 99), rep("2", 99), rep("3", 99)))
+
+ggplot(p7, aes(x = x, group = group, fill = group)) +
+  geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.5, linetype = "dashed") +
+  scale_fill_manual(name = "", values=c("#619CFF", "red", "green")) +
+  xlab(expression(italic("t"))) +
+  ylab(TeX('$\\widehat{\\beta}$(t)')) +
+  theme_bw()
+
+
+
+# Coverage frequency ------------------------------------------------------
+
+
+pk = c(n/2, n, n+n/2, 2*n)
+tk = c(30, 50, 70)
+
+e1 = 0
+for (i in 1:rep) {
+  temp = abs(all_result_kh[[i]][1:(2*n), ] - trueboi)/1.96
+  e1 = e1 + (temp[pk, tk] > sqrt(all_result_kh_var[[i]][pk, tk]))
+}
+e1 = e1 / rep
+1-e1
+
+e2 = 0
+for (i in 1:rep) {
+  temp = abs(all_result[[i]][1:(2*n), ] - trueBoi)/1.96
+  e2 = e2 + (temp[pk, tk] > sqrt(all_result_var[[i]][pk, tk]))
+}
+e2 = e2 / rep
+1-e2
 
 
 
@@ -253,18 +337,19 @@ hist(zins, seq(-8, 8, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = T
 curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
 
 
-# Test of Directed effect -------------------------------------------------
+# Test of Directed effect and degree heterogeneity ------------------------
 
 ap = 0
 sall = c()
 sall1 = c()
 for (i in 1:rep) {
-  out = directTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,],
-                   all_result_kh[[i]][(n+1):(2*n),], all_result_kh_var[[i]][(n+1):(2*n),], seq(10,90,10))
-  # out = degreeHTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,], 10)
+  # out = directTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,],
+  #                  all_result_kh[[i]][(n+1):(2*n),], all_result_kh_var[[i]][(n+1):(2*n),], seq(10,90,20))
+  # out = degreeHTest(all_result_kh[[i]][(n+1):(n+n/3),], all_result_kh_var[[i]][(n+1):(n+n/3),], 90)
+  out = degreeHTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,], seq(10,90,20))
 
   sall = c(sall, out[[1]])
-  sall1 = c(sall1, sum(all_result_kh[[i]][(1:n),60]^2/all_result_kh_var[[i]][(1:n),60]-1.05)/sqrt(2*n*1.14))
+  sall1 = c(sall1, sum(all_result_kh[[i]][(1:n),60]^2/all_result_kh_var[[i]][(1:n),60]-1)/sqrt(2*n))
   ap = ap + out[[2]]
 }
 
@@ -277,7 +362,6 @@ mean((all_result_kh[[i]][1:n,]/sqrt(all_result_kh_var[[i]][1:n,]))^2)
 test = c()
 for (i in 1:100) {
   test = c(test, mean(all_result_kh_zval[[i]][(n+1):(2*n),]^2))
-
 }
 
 # Under Null
@@ -285,24 +369,20 @@ g = function(x) {9*pnorm(x)^8*dnorm(x)}
 g = function(x) {5*pnorm(x)^4*dnorm(x)}
 h = Vectorize(g)
 
-hist(sall, seq(-6, 6, 0.5), ylim = c(0, 0.8), freq = FALSE, main = "", xlab = TeX('$T_d$'))
+hist(sall, seq(-6, 10, 0.5), ylim = c(0, 0.8), freq = FALSE, main = "", xlab = TeX('$T_d$'))
+hist(sall, seq(-2, 6, 0.5), ylim = c(0, 0.8), freq = FALSE, main = "", xlab = TeX('$T_{dh}$'))
 curve(h, xlab = "", ylab = "", add = T, lwd = 2.0)
 curve(dnorm, xlab = "", ylab = "", add = T, lwd = 2.0)
-qnorm(0.95^(1/9))
 
+base <- list(null = list(estimate = all_result_kh, var = all_result_kh_var))
 
+# TD 3-3-3 200
+# 5 9 40 90 100
+plot(seq(0,0.5,0.125), c(0.05, 0.09, 0.40, 0.90, 1), ylim = c(0, 1), ylab = "Size and Power", xlab = expression(italic(C[1])))
+lines(seq(0,0.5,0.125), c(0.05, 0.09, 0.40, 0.90, 1))
 
-de_test1 <- list(null = list(estimate = all_result_kh, var = all_result_kh_var))
-de_test = c(de_test, list(a10 = list(estimate = all_result_kh, var = all_result_kh_var)))
-de_test = c(de_test, list(a25 = list(estimate = all_result_kh, var = all_result_kh_var)))
-de_test = c(de_test, list(a125 = list(estimate = all_result_kh, var = all_result_kh_var)))
-de_test = c(de_test, list(a375 = list(estimate = all_result_kh, var = all_result_kh_var)))
+# TDH 3-3-3 200
+# 14 24 40 86 100
+plot(seq(0,1,0.25), c(0.12, 0.24, 0.40, 0.86, 1), ylim = c(0, 1), ylab = "Size and Power", xlab = expression(italic(C[2])))
+lines(seq(0,1,0.25), c(0.12, 0.24, 0.40, 0.86, 1))
 
-# 5-0-5
-# null 100 25 12.5 375 50
-#        9 100 41 13 91 100
-
-# 3-3-3
-# 12
-plot(seq(0,0.5,0.125), c(0.09, 0.13, 0.41, 0.91, 1), ylim = c(0, 1), ylab = "Power", xlab = expression(italic(C[1])))
-lines(seq(0,0.5,0.125), c(0.09, 0.13, 0.41, 0.91, 1))

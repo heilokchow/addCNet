@@ -13,7 +13,7 @@ degreeHTest <- function(inc, incvar, tsep) {
   n = nrow(inc)
   s0 = -100
   for (i in tsep) {
-    s = sum((inc[, i])^2/(incvar[, i]) - 1) / sqrt(n) / sqrt(2)
+    s = sum((inc[, i]-mean(inc[, i]))^2/(incvar[, i]) - 1) / sqrt(n) / sqrt(2)
     s0 = max(s0, s)
   }
   return(list(tstat = s0,
