@@ -4,7 +4,7 @@ library(latex2exp)
 
 # Functions ---------------------------------------------------------------
 
-n = 50
+n = 30
 p = 1
 
 t_sep_t = seq(0.01, 1, 0.01)
@@ -126,8 +126,12 @@ all_result_kh = list()
 all_result_kh_var = list()
 all_result_kh_zval = list()
 
+theta_sd = matrix(nrow = rep, ncol = 3)
+theta_ab_sd = matrix(nrow = rep, ncol = 3)
+
+set.seed(100)
 zij <- array(rnorm(n*n), c(n, n, 1, 1))
-rep = 300
+rep = 1000
 for (i in 1:rep) {
   cat(i, '\n')
   set.seed(i)
@@ -147,13 +151,32 @@ for (i in 1:rep) {
   all_result_kh_var[[i]] = rbind(np0$ab$sdout, np0$ab$sdinc)
   all_result_kh_zval[[i]] = rbind((np0$ab$outgoing - truebo) / sqrt(np0$ab$sdout),
                                   (np0$ab$incoming - truebi) / sqrt(np0$ab$sdinc))
+
+  # Additional output for tests
+
+  tk = c(30, 50, 70)
+  Pa = np0$Pa
+
+  for (j in 1:3) {
+    NTs = diag(np0$NTs[, tk[j]])
+    test = Pa %*% NTs %*% t(Pa)
+    theta_ab_sd[i, j] = test[2*n, 2*n]
+
+    NT = diag(np0$NT[, tk[j]])
+    test = Pa %*% NT %*% t(Pa)
+    theta_sd[i, j] = test[2*n, 2*n]
+  }
 }
 
 all_mean = array(0, c(2*n + p, 100, rep))
+all_mean_sd = array(0, c(2*n, 100, rep))
 all_mean_kh = array(0, c(2*n + p, 100, rep))
+all_mean_sd_kh = array(0, c(2*n, 100, rep))
 for (i in 1:rep) {
   all_mean[,,i] = all_result[[i]]
+  all_mean_sd[,,i] = sqrt(all_result_var[[i]])
   all_mean_kh[,,i] = all_result_kh[[i]]
+  all_mean_sd_kh[,,i] = sqrt(all_result_kh_var[[i]])
 }
 
 resMean = apply(all_mean, c(1,2), mean)
@@ -282,20 +305,43 @@ pk = c(n/2, n, n+n/2, 2*n)
 tk = c(30, 50, 70)
 
 e1 = 0
+e1t = 0
 for (i in 1:rep) {
   temp = abs(all_result_kh[[i]][1:(2*n), ] - trueboi)/1.96
   e1 = e1 + (temp[pk, tk] > sqrt(all_result_kh_var[[i]][pk, tk]))
+
+  temp1 = abs(all_result_kh[[i]][2*n+p, ] - 0.2)/1.96
+  e1t = e1t + (temp1[tk] > sqrt(theta_ab_sd[i,]))
 }
 e1 = e1 / rep
+e1t = e1t / rep
 1-e1
+1-e1t
+
+xkk_sum_sd = apply(all_mean_sd_kh, c(1, 2), mean, na.rm = TRUE)
+xkk_sum_sd_th = apply(theta_ab_sd, 2, mean, na.rm = TRUE)
+round(xkk_sum_sd[pk, tk]*1.96*2, 2)
+round(sqrt(xkk_sum_sd_th)*1.96*2, 2)
+
 
 e2 = 0
+e2t = 0
 for (i in 1:rep) {
   temp = abs(all_result[[i]][1:(2*n), ] - trueBoi)/1.96
   e2 = e2 + (temp[pk, tk] > sqrt(all_result_var[[i]][pk, tk]))
+
+  temp1 = abs(all_result[[i]][2*n+p, ] - 0.2*t_sep_t)/1.96
+  e2t = e2t + (temp1[tk] > sqrt(theta_sd[i,]))
 }
 e2 = e2 / rep
+e2t = e2t / rep
 1-e2
+1-e2t
+
+xkk_sum_sd = apply(all_mean_sd, c(1, 2), mean, na.rm = TRUE)
+xkk_sum_sd_th = apply(theta_sd, 2, mean, na.rm = TRUE)
+round(xkk_sum_sd[pk, tk]*1.96*2, 2)
+round(sqrt(xkk_sum_sd_th)*1.96*2, 2)
 
 
 

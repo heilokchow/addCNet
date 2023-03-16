@@ -69,8 +69,10 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
   SDoa = matrix(0, nrow = n, ncol = 100)
   SDib = matrix(0, nrow = n, ncol = 100)
   N_t = matrix(0, nrow = n*(n-1), ncol = 1)
+  N_tC = matrix(0, nrow = n*(n-1), ncol = 100)
   N_tall = matrix(0, nrow = n*(n-1), ncol = 100)
   N_tallM = array(0, c(n, n, 100))
+  N_tallMC = matrix(0, nrow = n*(n-1), ncol = 100)
   Nij = matrix(0, nrow = n, ncol = n)
 
   t2 = Sys.time()
@@ -121,8 +123,10 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
     if (t_norm[i] >= t_sep_t[co]) {
       if (co == 1) {
         B[, co] = Pa %*% N_t
+        N_tC[, co] = N_t
       } else {
         B[, co] = B[, co - 1] + Pa %*% N_t
+        N_tC[, co] = N_tC[, co - 1] + N_t
       }
       B1[1, co] = -sum(B[2:n, co])
       B1[2, co] = -sum(B[(n+1):(2*n-1), co])
@@ -162,6 +166,15 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
     SDib[, j] = 1/n^2 * rowSums(N_tallM[,,j])
   }
 
+  for (i in 1:n) {
+    for (j in 1:n) {
+      for (t in 1:100) {
+        z3 = hash[(i-1)*n+j]
+        N_tallMC[z3, t] = N_tallM[i, j, t]
+      }
+    }
+  }
+
   if (!is.null(zij)) {
     output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
                                             outgoing = rbind(matrix(B1[1,], nrow = 1),
@@ -180,6 +193,9 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
                              sdinc = SDib),
                    th = b[(2*n):(2*n-1+p),],
                    V = V/100,
+                   NT = N_tC,
+                   NTs = N_tallMC,
+                   Pa = Pa,
                    ts = c(t12, t23, t34))
   } else {
     output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),

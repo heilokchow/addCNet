@@ -69,17 +69,26 @@ List SimSetC(int n, double shift1, double shift2, NumericVector Zij) {
 }
 
 
+// double fs(double t, const double& shift1, int i, const int &n) {
+//   if (i < n / 3) return shift1*sin(2*PI*t)/2;
+//   if (i > 2 * n / 3) return -shift1*sin(2*PI*t)/2;
+//   return 0;
+// }
+//
+// double fr(double t, const double& shift2, int i, const int &n) {
+//   if (i < n / 3) return shift2 + sin(2*PI*t)/2;
+//   if (i > 2 * n / 3) return - shift2 - sin(2*PI*t)/2;
+//   return 0;
+// }
+
 double fs(double t, const double& shift1, int i, const int &n) {
-  if (i < n / 3) return shift1*sin(2*PI*t)/2;
-  if (i > 2 * n / 3) return -shift1*sin(2*PI*t)/2;
-  return 0;
+  return 0.04*(i-(n+1)/2)*sin(2*PI*t);
 }
 
 double fr(double t, const double& shift2, int i, const int &n) {
-  if (i < n / 3) return shift2 + sin(2*PI*t)/2;
-  if (i > 2 * n / 3) return - shift2 - sin(2*PI*t)/2;
-  return 0;
+  return 0.04*(i-(n+1)/2)*cos(2*PI*t);
 }
+
 
 double fg(double t) {
   return 0.2;
