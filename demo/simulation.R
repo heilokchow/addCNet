@@ -10,7 +10,7 @@ p = 1
 t_sep_t = seq(0.01, 1, 0.01)
 
 # SIM1
-bs <- function(t) {2}
+bs <- function(t) {3}
 fs <- function(t, i) {0.04*(i-(n+1)/2)*sin(2*pi*t)} # cautious about negative hazard
 fr <- function(t, i) {0.04*(i-(n+1)/2)*cos(2*pi*t)}
 # fs <- function(t, i) {0.02*(i-(n+1)/2)}
@@ -47,7 +47,7 @@ fgI1 = Vectorize(fgI)
 
 # SIM2
 
-n = 50
+n = 100
 p = 1
 
 bs <- function(t) {2}
@@ -96,7 +96,6 @@ fgI1 = Vectorize(fgI)
 trueBo = matrix(0, nrow = n, ncol = 100)
 trueBi = matrix(0, nrow = n, ncol = 100)
 
-trueBoi = rbind(trueBo, trueBi)
 
 for (i in 1:n) {
   for (j in 1:100) {
@@ -104,6 +103,8 @@ for (i in 1:n) {
     trueBi[i, j] = frI1(t_sep_t[j], i)
   }
 }
+trueBoi = rbind(trueBo, trueBi)
+
 
 truebo = matrix(0, nrow = n, ncol = 100)
 truebi = matrix(0, nrow = n, ncol = 100)
@@ -126,21 +127,21 @@ all_result_kh = list()
 all_result_kh_var = list()
 all_result_kh_zval = list()
 
+rep = 100
 theta_sd = matrix(nrow = rep, ncol = 3)
 theta_ab_sd = matrix(nrow = rep, ncol = 3)
 
 set.seed(100)
 zij <- array(rnorm(n*n), c(n, n, 1, 1))
-rep = 1000
 for (i in 1:rep) {
   cat(i, '\n')
   set.seed(i)
 
   # Generate Data
-  result <- tGenerateC(n, shift1 = 1, shift2 = 0, Zij = array(zij, c(n,n,p)))
+  result <- tGenerateC(n, shift1 = 0, shift2 = 0, Zij = array(zij, c(n,n,p)))
 
   # Model Run
-  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.05, test = 0)
+  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.2, test = 0)
 
   all_result[[i]] = rbind(np0$homo_coefficients$outgoing, np0$homo_coefficients$incoming, np0$nonhomo_coefficients)
   all_result_var[[i]] = rbind(np0$homo_coefficients$sdout, np0$homo_coefficients$sdinc)
@@ -154,18 +155,16 @@ for (i in 1:rep) {
 
   # Additional output for tests
 
-  tk = c(30, 50, 70)
-  Pa = np0$Pa
-
-  for (j in 1:3) {
-    NTs = diag(np0$NTs[, tk[j]])
-    test = Pa %*% NTs %*% t(Pa)
-    theta_ab_sd[i, j] = test[2*n, 2*n]
-
-    NT = diag(np0$NT[, tk[j]])
-    test = Pa %*% NT %*% t(Pa)
-    theta_sd[i, j] = test[2*n, 2*n]
-  }
+  # tk = c(30, 50, 70)
+  # PaT = np0$Pa[2*n,]
+  #
+  # for (j in 1:3) {
+  #   NTs = np0$NTs[, tk[j]]
+  #   theta_ab_sd[i, j] = sum(NTs * PaT * PaT)
+  #
+  #   NT = np0$NT[, tk[j]]
+  #   theta_sd[i, j] = sum(NT * PaT * PaT)
+  # }
 }
 
 all_mean = array(0, c(2*n + p, 100, rep))
@@ -192,7 +191,7 @@ rekhsu = apply(all_mean_kh, c(1, 2), quantile, probs = 0.975, na.rm = TRUE)
 
 # ABT plot ----------------------------------------------------------------
 
-q = 3
+q = n
 p1 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fsI1, args = list(q = q), color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
@@ -208,7 +207,7 @@ ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fs, args = lis
   theme_bw()
 
 
-q = n+3
+q = n*2
 p2 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p2, aes(x = x, y = y)) + geom_line() + stat_function(fun = frI1, args = list(q = q-n), color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
@@ -301,7 +300,8 @@ ggplot(p7, aes(x = x, group = group, fill = group)) +
 # Coverage frequency ------------------------------------------------------
 
 
-pk = c(n/2, n, n+n/2, 2*n)
+pk = c(n/3, 2*n/3, n+n/3, n+2*n/3)
+pk = c(n/2, n, n+n/2, n+n)
 tk = c(30, 50, 70)
 
 e1 = 0
@@ -326,6 +326,7 @@ round(sqrt(xkk_sum_sd_th)*1.96*2, 2)
 
 e2 = 0
 e2t = 0
+
 for (i in 1:rep) {
   temp = abs(all_result[[i]][1:(2*n), ] - trueBoi)/1.96
   e2 = e2 + (temp[pk, tk] > sqrt(all_result_var[[i]][pk, tk]))
@@ -352,7 +353,7 @@ zon = c()
 zin = c()
 
 for (i in 1:100) {
-  zon = c(zon, all_result_zval[[i]][n/2,][which(abs(all_result_zval[[i]][n/2,]) < Inf)])
+  zon = c(zon, all_result_zval[[i]][n,][which(abs(all_result_zval[[i]][n,]) < Inf)])
   zin = c(zin, all_result_zval[[i]][n*3/2,][which(abs(all_result_zval[[i]][n*3/2,]) < Inf)])
 }
 #

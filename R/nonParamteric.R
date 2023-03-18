@@ -130,8 +130,8 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
       }
       B1[1, co] = -sum(B[2:n, co])
       B1[2, co] = -sum(B[(n+1):(2*n-1), co])
-      SDo[, co] = 1/n^2 * colSums(Nij)
-      SDi[, co] = 1/n^2 * rowSums(Nij)
+      SDo[, co] = 1/n^2 * rowSums(Nij)
+      SDi[, co] = 1/n^2 * colSums(Nij)
       co = co + 1
       V = V + Va
 
@@ -162,8 +162,8 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
   b1[2, ] = - colSums(b[(n+1):(2*n-1),])
 
   for (j in 1:100) {
-    SDoa[, j] = 1/n^2 * colSums(N_tallM[,,j])
-    SDib[, j] = 1/n^2 * rowSums(N_tallM[,,j])
+    SDoa[, j] = 1/n^2 * rowSums(N_tallM[,,j])
+    SDib[, j] = 1/n^2 * colSums(N_tallM[,,j])
   }
 
   for (i in 1:n) {
