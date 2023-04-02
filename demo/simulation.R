@@ -47,7 +47,7 @@ fgI1 = Vectorize(fgI)
 
 # SIM2
 
-n = 100
+n = 50
 p = 1
 
 bs <- function(t) {2}
@@ -138,7 +138,7 @@ for (i in 1:rep) {
   set.seed(i)
 
   # Generate Data
-  result <- tGenerateC(n, shift1 = 0, shift2 = 0, Zij = array(zij, c(n,n,p)))
+  result <- tGenerateC(n, shift1 = 1, shift2 = 0, Zij = array(zij, c(n,n,p)))
 
   # Model Run
   np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.2, test = 0)
@@ -263,29 +263,30 @@ ggplot(p5, aes(x = x, group = group, fill = group)) +
   ylab(TeX('$\\widehat{\\alpha}$(t)'))
 
 p6 = data.frame(x = rep(seq(0.01,0.99,0.01), 3),
-                yl = c(apply(reskhMean[1:15,1:99], 2, min),
-                       apply(reskhMean[16:33,1:99], 2, min),
-                       apply(reskhMean[34:50,1:99], 2, min)),
-                yu = c(apply(reskhMean[1:15,1:99], 2, max),
-                       apply(reskhMean[16:33,1:99], 2, max),
-                       apply(reskhMean[34:50,1:99], 2, max)),
+                yl = c(apply(reskhMean[1:(n/3-1),1:99], 2, min),
+                       apply(reskhMean[(n/3):(n/3*2),1:99], 2, min),
+                       apply(reskhMean[(n/3*2+1):n,1:99], 2, min)),
+                yu = c(apply(reskhMean[1:(n/3-1),1:99], 2, max),
+                       apply(reskhMean[(n/3):(n/3*2),1:99], 2, max),
+                       apply(reskhMean[(n/3*2+1):n,1:99], 2, max)),
                 group = c(rep("1", 99), rep("2", 99), rep("3", 99)))
 
 ggplot(p6, aes(x = x, group = group, fill = group)) +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.5, linetype = "dashed") +
   scale_fill_manual(name = "", values=c("#619CFF", "red", "green")) +
   xlab(expression(italic("t"))) +
-  ylab(TeX('$\\widehat{\\alpha}$(t)')) +
-  theme_bw()
+  ylab(TeX('$\\widehat{\\alpha}$(t)'))  +
+  theme(panel.background = element_rect(fill = "white")) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
 
 
 p7 = data.frame(x = rep(seq(0.01,0.99,0.01), 3),
-                yl = c(apply(reskhMean[(n+1:15),1:99], 2, min),
-                       apply(reskhMean[(n+16:33),1:99], 2, min),
-                       apply(reskhMean[(n+34:50),1:99], 2, min)),
-                yu = c(apply(reskhMean[(n+1:15),1:99], 2, max),
-                       apply(reskhMean[(n+16:33),1:99], 2, max),
-                       apply(reskhMean[(n+34:50),1:99], 2, max)),
+                yl = c(apply(reskhMean[n+1:(n/3-1),1:99], 2, min),
+                       apply(reskhMean[n+(n/3):(n/3*2),1:99], 2, min),
+                       apply(reskhMean[n+(n/3*2+1):n,1:99], 2, min)),
+                yu = c(apply(reskhMean[n+1:(n/3-1),1:99], 2, max),
+                       apply(reskhMean[n+(n/3):(n/3*2),1:99], 2, max),
+                       apply(reskhMean[n+(n/3*2+1):n,1:99], 2, max)),
                 group = c(rep("1", 99), rep("2", 99), rep("3", 99)))
 
 ggplot(p7, aes(x = x, group = group, fill = group)) +
@@ -293,7 +294,8 @@ ggplot(p7, aes(x = x, group = group, fill = group)) +
   scale_fill_manual(name = "", values=c("#619CFF", "red", "green")) +
   xlab(expression(italic("t"))) +
   ylab(TeX('$\\widehat{\\beta}$(t)')) +
-  theme_bw()
+  theme(panel.background = element_rect(fill = "white")) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
 
 
 
@@ -389,11 +391,15 @@ curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
 ap = 0
 sall = c()
 sall1 = c()
-for (i in 1:rep) {
+
+k1 = c((1):(n/3-1), (n/3*2):(n))
+
+for (i in 1:100) {
   # out = directTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,],
   #                  all_result_kh[[i]][(n+1):(2*n),], all_result_kh_var[[i]][(n+1):(2*n),], seq(10,90,20))
   # out = degreeHTest(all_result_kh[[i]][(n+1):(n+n/3),], all_result_kh_var[[i]][(n+1):(n+n/3),], 90)
-  out = degreeHTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,], seq(10,90,20))
+  out = degreeHTest(all_result_kh[[i]][k1,], all_result_kh_var[[i]][k1,], 25)
+  # out = degreeHTest(all_result_kh[[i]][1:n,], all_result_kh_var[[i]][1:n,], 75)
 
   sall = c(sall, out[[1]])
   sall1 = c(sall1, sum(all_result_kh[[i]][(1:n),60]^2/all_result_kh_var[[i]][(1:n),60]-1)/sqrt(2*n))
@@ -433,3 +439,7 @@ lines(seq(0,0.5,0.125), c(0.05, 0.09, 0.40, 0.90, 1))
 plot(seq(0,1,0.25), c(0.12, 0.24, 0.40, 0.86, 1), ylim = c(0, 1), ylab = "Size and Power", xlab = expression(italic(C[2])))
 lines(seq(0,1,0.25), c(0.12, 0.24, 0.40, 0.86, 1))
 
+# TDH three
+# 0.03 0.92 1
+#      0.03 0.96
+#           0.08
