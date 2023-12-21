@@ -45,9 +45,97 @@ fgI <- function(t, q) {
 fgI1 = Vectorize(fgI)
 
 
+# SIM1.5
+
+n = 300
+p = 1
+
+bs <- function(t) {0.2}
+fs <- function(t, i) {
+  if (i <= n/3) return(0.1+0.1*sin(2*pi*t))
+  return(-0.05-0.05*sin(2*pi*t))
+} # cautious about negative hazard
+fr <- function(t, i) {
+  if (i <= n/3) return(0.1+0.1*cos(2*pi*t))
+  return(-0.05-0.05*cos(2*pi*t))
+}
+fg <- function(t, k) {0.05+t*0}
+
+fsI <- function(t, q) {
+  if (t <= 0) {
+    return(0)
+  }
+  integrate(fs, 0, t, i = q)[[1]]
+}
+
+fsI1 = Vectorize(fsI)
+
+frI <- function(t, q) {
+  if (t <= 0) {
+    return(0)
+  }
+  integrate(fr, 0, t, i = q)[[1]]
+}
+
+frI1 = Vectorize(frI)
+
+fgI <- function(t, q) {
+  if (t <= 0) {
+    return(0)
+  }
+  integrate(fg, 0, t, k = q)[[1]]
+}
+
+fgI1 = Vectorize(fgI)
+
+
+# SIM1.6
+
+n = 1000
+p = 1
+
+bs <- function(t) {2/sqrt(n)}
+fs <- function(t, i) {
+  if (i <= n/2) return((0.5+0.5*sin(2*pi*t))/sqrt(n))
+  return(-(0.5+0.5*sin(2*pi*t))/sqrt(n))
+} # cautious about negative hazard
+fr <- function(t, i) {
+  if (i <= n/2) return((0.5+0.5*cos(2*pi*t))/sqrt(n))
+  return(-(0.5+0.5*cos(2*pi*t))/sqrt(n))
+}
+fg <- function(t, k) {0.25/sqrt(n)+t*0}
+
+fsI <- function(t, q) {
+  if (t <= 0) {
+    return(0)
+  }
+  integrate(fs, 0, t, i = q)[[1]]
+}
+
+fsI1 = Vectorize(fsI)
+
+frI <- function(t, q) {
+  if (t <= 0) {
+    return(0)
+  }
+  integrate(fr, 0, t, i = q)[[1]]
+}
+
+frI1 = Vectorize(frI)
+
+fgI <- function(t, q) {
+  if (t <= 0) {
+    return(0)
+  }
+  integrate(fg, 0, t, k = q)[[1]]
+}
+
+fgI1 = Vectorize(fgI)
+
+
 # SIM2
 
-n = 50
+n = 400
 p = 1
 
 bs <- function(t) {2}
@@ -127,12 +215,14 @@ all_result_kh = list()
 all_result_kh_var = list()
 all_result_kh_zval = list()
 
-rep = 100
+rep = 1
 theta_sd = matrix(nrow = rep, ncol = 3)
+# theta_sd = rbind(theta_sd, matrix(0, nrow = rep-100, ncol = 3))
 theta_ab_sd = matrix(nrow = rep, ncol = 3)
+# theta_ab_sd = rbind(theta_ab_sd, matrix(0, nrow = rep-100, ncol = 3))
 
 set.seed(100)
-zij <- array(rnorm(n*n), c(n, n, 1, 1))
+zij <- array(runif(n*n), c(n, n, 1, 1))
 for (i in 1:rep) {
   cat(i, '\n')
   set.seed(i)
@@ -141,7 +231,9 @@ for (i in 1:rep) {
   result <- tGenerateC(n, shift1 = 1, shift2 = 0, Zij = array(zij, c(n,n,p)))
 
   # Model Run
-  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.2, test = 0)
+  t1 = Sys.time()
+  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.07, test = 0)
+  t2 = Sys.time()
 
   all_result[[i]] = rbind(np0$homo_coefficients$outgoing, np0$homo_coefficients$incoming, np0$nonhomo_coefficients)
   all_result_var[[i]] = rbind(np0$homo_coefficients$sdout, np0$homo_coefficients$sdinc)
@@ -155,16 +247,16 @@ for (i in 1:rep) {
 
   # Additional output for tests
 
-  # tk = c(30, 50, 70)
-  # PaT = np0$Pa[2*n,]
-  #
-  # for (j in 1:3) {
-  #   NTs = np0$NTs[, tk[j]]
-  #   theta_ab_sd[i, j] = sum(NTs * PaT * PaT)
-  #
-  #   NT = np0$NT[, tk[j]]
-  #   theta_sd[i, j] = sum(NT * PaT * PaT)
-  # }
+  tk = c(30, 50, 70)
+  PaT = np0$Pa[2*n,]
+
+  for (j in 1:3) {
+    NTs = np0$NTs[, tk[j]]
+    theta_ab_sd[i, j] = sum(NTs * PaT * PaT)
+
+    NT = np0$NT[, tk[j]]
+    theta_sd[i, j] = sum(NT * PaT * PaT)
+  }
 }
 
 all_mean = array(0, c(2*n + p, 100, rep))
@@ -188,9 +280,25 @@ rekhsu = apply(all_mean_kh, c(1, 2), quantile, probs = 0.975, na.rm = TRUE)
 
 # Plot --------------------------------------------------------------------
 
+Nij = matrix(0, n, n)
+for (i in 1:nrow(result$trail)) {
+  p1 = result$trail[i, 1]
+  q1 = result$trail[i, 2]
+  Nij[p1, q1] = Nij[p1, q1] + 1
+}
+
+t_seq = c(20, 40, 80, 160, 320, 640)
+t_seq_1 = c(0.035, 0.109, 0.567, 3.329, 25.01, 270.62)
+fit1 = lm(log(t_seq_1)~log(t_seq))
+
+plot(log(t_seq), log(t_seq_1), ylab = "Log(Runtime in seconds)", xlab = "Log(Sample size)")
+plot(t_seq, t_seq_1, ylab = "Log(Runtime in seconds)", xlab = "Log(Sample size)", log = c('xy'))
+abline(a = -13.5, b = 3, col = "red")
+
 
 # ABT plot ----------------------------------------------------------------
 
+q = 10
 q = n
 p1 = data.frame(x = seq(0.01,1,0.01), y = resMean[q,], yl = resl[q,], yu = resu[q,])
 ggplot(p1, aes(x = x, y = y)) + geom_line() + stat_function(fun = fsI1, args = list(q = q), color = "red") +
@@ -225,14 +333,14 @@ ggplot(p2, aes(x = x, y = y)) + geom_line() + stat_function(fun = fr, args = lis
 
 q = 1
 p3 = data.frame(x = seq(0.01,1,0.01), y = resMean[2*n+q,], yl = resl[2*n+q,], yu = resu[2*n+q,])
-ggplot(p3, aes(x = x, y = y)) + geom_line() + stat_function(fun = function(x) {0.2*x}, color = "red") +
+ggplot(p3, aes(x = x, y = y)) + geom_line() + stat_function(fun = function(x) {0.25/sqrt(n)*x}, color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
   xlab(expression(italic("t"))) +
   ylab(TeX('$\\widehat{\\Theta}_{1}$(t)')) +
   theme_bw()
 
 p3 = data.frame(x = seq(0.1,0.9,0.01), y = reskhMean[2*n+q,10:90], yl = rekhsl[2*n+q,10:90], yu = rekhsu[2*n+q,10:90])
-ggplot(p3, aes(x = x, y = y)) + geom_line() + stat_function(fun = function(x) {0.2}, color = "red") +
+ggplot(p3, aes(x = x, y = y)) + geom_line() + stat_function(fun = function(x) {0.25/sqrt(n)}, color = "red") +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
   xlab(expression(italic("t"))) +
   ylab(TeX('$\\widehat{\\theta}_{1}$(t)')) +
@@ -312,7 +420,7 @@ for (i in 1:rep) {
   temp = abs(all_result_kh[[i]][1:(2*n), ] - trueboi)/1.96
   e1 = e1 + (temp[pk, tk] > sqrt(all_result_kh_var[[i]][pk, tk]))
 
-  temp1 = abs(all_result_kh[[i]][2*n+p, ] - 0.2)/1.96
+  temp1 = abs(all_result_kh[[i]][2*n+p, ] - 0.25/sqrt(n))/1.96
   e1t = e1t + (temp1[tk] > sqrt(theta_ab_sd[i,]))
 }
 e1 = e1 / rep
@@ -333,7 +441,7 @@ for (i in 1:rep) {
   temp = abs(all_result[[i]][1:(2*n), ] - trueBoi)/1.96
   e2 = e2 + (temp[pk, tk] > sqrt(all_result_var[[i]][pk, tk]))
 
-  temp1 = abs(all_result[[i]][2*n+p, ] - 0.2*t_sep_t)/1.96
+  temp1 = abs(all_result[[i]][2*n+p, ] - 0.25/sqrt(n)*t_sep_t)/1.96
   e2t = e2t + (temp1[tk] > sqrt(theta_sd[i,]))
 }
 e2 = e2 / rep
@@ -375,13 +483,15 @@ zons = c()
 zins = c()
 
 for (i in 1:100) {
-  zons = c(zons, all_result_kh_zval[[i]][n/2, 30:70])
-  zins = c(zins, all_result_kh_zval[[i]][n*3/2, 30:70])
+  zons = c(zons, all_result_kh_zval[[i]][n/3, 30:70])
+  zins = c(zins, all_result_kh_zval[[i]][n*4/3, 30:70])
 }
 
+# zons = zons[which(zons > -7)]
 hist(zons, seq(-7, 7, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\alpha}_{n/2}$'))
 curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
 
+# zins = zins[which(zins > -7)]
 hist(zins, seq(-8, 8, 0.5), ylim = c(0, 0.45), freq = FALSE, main = "", xlab = TeX('Standardized $\\widehat{\\beta}_{n/2}$'))
 curve(dnorm(x), xlab = "", ylab = "", add = T, lwd = 2.0)
 

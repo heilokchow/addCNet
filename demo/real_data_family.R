@@ -22,6 +22,7 @@ copule = read.csv("SurveyCouples.csv")
 unique(sms[,1])
 unique(friend[,2])
 
+
 rm1 = which(substring(friend[,2], 1, 2) == "fa")
 rm2 = which(substring(friend[,3], 1, 2) == "fa")
 rmall = union(rm1, rm2)
@@ -216,9 +217,10 @@ df1 = data.frame(x = rep(plot_t1), y = c(corrAB), group = c(rep("heterogeneous",
 q1 = ggplot(df1, aes(x = x, y = y)) +
   geom_bar(stat = "identity", fill = "#E69F00") +
   scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   scale_y_continuous(limits = c(-0.05, 0.7)) +
   theme(legend.position="top", panel.background = element_rect(fill = "white")) +
-  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
   xlab("Time") +
   ylab("Correlation") +
   ggtitle("heterogeneous")
@@ -228,9 +230,10 @@ df2 = data.frame(x = rep(plot_t1), y = c(corrCP), group = c(rep("couple", 19)))
 q2 = ggplot(df2, aes(x = x, y = y)) +
   geom_bar(stat = "identity", fill = "#56B4E9") +
   scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   scale_y_continuous(limits = c(-0.05, 0.7)) +
   theme(legend.position="top", panel.background = element_rect(fill = "white")) +
-  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
   xlab("Time") +
   ylab("Correlation") + ggtitle("couple without children")
 
@@ -240,9 +243,10 @@ df3 = data.frame(x = rep(plot_t1), y = c(corrCh))
 q3 = ggplot(df3, aes(x = x, y = y)) +
   geom_bar(stat = "identity", fill = "#009E73") +
   scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   scale_y_continuous(limits = c(-0.05, 0.7)) +
   theme(legend.position="top", panel.background = element_rect(fill = "white")) +
-  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
   xlab("Time") +
   ylab("Correlation") +
   ggtitle("couple with children")
@@ -252,9 +256,10 @@ df4 = data.frame(x = rep(plot_t1), y = c(corrFr))
 q4 = ggplot(df4, aes(x = x, y = y)) +
   geom_bar(stat = "identity", fill = "#F0E442") +
   scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   scale_y_continuous(limits = c(-0.3, 0.7)) +
   theme(legend.position="top", panel.background = element_rect(fill = "white")) +
-  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
   xlab("Time") +
   ylab("Correlation") +
   ggtitle("friend")
@@ -301,12 +306,12 @@ for (i in 1:nrow(friend1)) {
 
 zij1[,,,] = zij1[,,,]/2
 
-par(mar=c(5.1, 4.1, 4.1, 4.1))
+par(mar=c(5.1, 4.1, 4.1, -0.2))
 plot(zij1[,,,1], border = NA, xlab = "Individual", ylab = "Individual", main = "2010-09-01")
 plot(zij1[,,,4], border = NA, xlab = "Individual", ylab = "Individual", main = "2011-05-01")
 
-plot(zij[,,3,1]==1, border = NA, xlab = "Individual", ylab = "Individual", main = "2010-09-01")
-plot(zij[,,3,4]==1, border = NA, xlab = "Individual", ylab = "Individual", main = "2011-05-01")
+plot(zij[,,3,1]==1, col = c("white", "#CCCCCC"), border = NA, xlab = "Individual", ylab = "Individual", main = "2010-09-01")
+plot(zij[,,3,4]==1, col = c("white", "#CCCCCC"), border = NA, xlab = "Individual", ylab = "Individual", main = "2011-05-01")
 
 
 # Plot in-out degree
@@ -357,7 +362,7 @@ ggplot(p4, aes(x = t, y = y)) +
   geom_line(aes(color = group), size = 0.75) +
   scale_y_continuous(breaks=seq(0, 500, 100), limits = c(0, 550)) +
   scale_color_discrete(name="")+
-  scale_x_date(date_labels = "%y %b %d", breaks = "12 week") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   ylab("Monthly In-degree") +
   theme(panel.background = element_rect(fill = "white"), legend.position = c(0.15, 0.8)) +
@@ -375,12 +380,27 @@ ggplot(p5, aes(x = t, y = y)) +
   geom_line(aes(color = group), size = 0.75) +
   scale_y_continuous(breaks=seq(0, 500, 100), limits = c(0, 550)) +
   scale_color_discrete(name="")+
-  scale_x_date(date_labels = "%y %b %d", breaks = "12 week") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   ylab("Monthly Out-degree") +
   theme(panel.background = element_rect(fill = "white"), legend.position = c(0.15, 0.8)) +
   theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
 
+in_ave_dev_person = apply(in_ave_dev, 2, mean)
+in_ave_dev_sd = apply(in_ave_dev, 2, sd)
+
+df_degree = data.frame(x = plot_t1[-1], y = c(in_ave_dev_person),
+                yl = c(pmax(in_ave_dev_person - 1.96 * in_ave_dev_sd, 0)),
+                yu = c(in_ave_dev_person + 1.96 * in_ave_dev_sd))
+
+ggplot(df_degree, aes(x = x, y = y)) + geom_line() +
+  geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
+  xlab(expression(italic("t"))) +
+  ylab("Monthly average In-degree")  +
+  theme(panel.background = element_rect(fill = "white")) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1)) +
+  theme(legend.position = "none")
 
 # Homo
 
@@ -421,11 +441,70 @@ ggplot(p3, aes(x = t, y = y)) +
   geom_line(aes(color = group), size = 0.75) +
   # scale_y_continuous(breaks=seq(0, 15, 5), limits = c(0, 15)) +
   scale_color_discrete(name="", labels = c("couple", "non couple"))+
-  scale_x_date(date_labels = "%y %b %d", breaks = "12 week") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   ylab("Monthly number of SMS") +
   theme(panel.background = element_rect(fill = "white"), legend.position = c(0.2, 0.85)) +
   theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+
+# Out-degree sp10-01-07
+
+library(tidyr)
+library(dplyr)
+
+o1 = which(trail[,1] == 1)
+dfo1 = data.frame(t = as.Date(sms1[o1, 3]), id = trail[o1, 2])
+dfevent = matrix(0, nrow = nrow(dfo1), ncol = n-1)
+for (i in 2:n) {
+  dfevent[,i-1] = dfo1$id == i
+}
+dfevent = as.data.frame(dfevent)
+colnames(dfevent) = sprintf("%02d", 2:28)
+dfevent$t = dfo1$t
+
+data <- dfevent %>% pivot_longer(-c(t), names_to = 'id')
+
+ggplot(data) + geom_point(aes(x = t, y = 2))+
+  geom_vline(aes(xintercept  = t), data = filter(data,value == 1)) +
+  xlab(expression(italic("t"))) +
+  scale_x_date(limits = c(as.Date("2010-03-18"), as.Date("2011/07/15"))) +
+  coord_cartesian(ylim = c(0,1))+
+  facet_wrap(~id, ncol = 1, strip.position = 'left') +
+  theme(axis.title.y       = element_blank(),
+        axis.text.y        = element_blank(),
+        axis.ticks.y       = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
+
+
+
+# In-degree sp10-01-07
+
+o2 = which(trail[,2] == 1)
+dfo2 = data.frame(t = as.Date(sms1[o2, 3]), id = trail[o2, 1])
+dfevent2 = matrix(0, nrow = nrow(dfo2), ncol = n-1)
+for (i in 2:n) {
+  dfevent2[,i-1] = dfo2$id == i
+}
+dfevent2 = as.data.frame(dfevent2)
+colnames(dfevent2) = sprintf("%02d", 2:28)
+dfevent2$t = dfo2$t
+
+data2 <- dfevent2 %>% pivot_longer(-c(t), names_to = 'id')
+
+ggplot(data2) + geom_point(aes(x = t, y = 2))+
+  geom_vline(aes(xintercept  = t), data = filter(data2,value == 1)) +
+  scale_x_date(limits = c(as.Date("2010-03-18"), as.Date("2011/07/15"))) +
+  xlab(expression(italic("t"))) +
+  coord_cartesian(ylim = c(0,1))+
+  facet_wrap(~id, ncol = 1, strip.position = 'left') +
+  theme(axis.title.y       = element_blank(),
+        axis.text.y        = element_blank(),
+        axis.ticks.y       = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
+
 
 
 
@@ -462,11 +541,7 @@ df = data.frame(x = plot_t1, y = c(bsestimate),
 
 ggplot(df, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.2, linetype = "dashed") +
-  # geom_vline(xintercept = as.Date("2008/12/13"), linetype="dotted") +
-  # geom_vline(xintercept = as.Date("2009/01/05"), linetype="dotted") +
-  # geom_vline(xintercept = as.Date("2009/03/20"), linetype="dotted") +
-  # geom_vline(xintercept = as.Date("2009/03/30"), linetype="dotted") +
-  # geom_vline(xintercept = as.Date("2009/05/30"), linetype="dotted") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   ylab("Cumulative baseline hazard")  +
   theme(panel.background = element_rect(fill = "white")) +
@@ -487,6 +562,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-20, 130, 20), limits = c(-20, 130)) +
@@ -503,6 +579,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-20, 130, 20), limits = c(-20, 130)) +
@@ -522,6 +599,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-10, 170, 20), limits = c(-10, 170)) +
@@ -538,6 +616,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-10, 170, 20), limits = c(-10, 170)) +
@@ -557,6 +636,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-10, 90, 20), limits = c(-10, 90)) +
@@ -573,6 +653,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-10, 90, 20), limits = c(-10, 90)) +
@@ -594,6 +675,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-2, 22, 4), limits = c(-2, 22)) +
@@ -610,6 +692,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-2, 22, 4), limits = c(-2, 22)) +
@@ -628,6 +711,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-2, 50, 13), limits = c(-2, 50)) +
@@ -644,6 +728,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-2, 50, 13), limits = c(-2, 50)) +
@@ -663,6 +748,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-2, 22, 8), limits = c(-2, 22)) +
@@ -679,6 +765,7 @@ roledf = data.frame(x = plot_t1,
 
 ggplot(roledf, aes(x = x, y = y)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.3) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   scale_y_continuous(breaks=seq(-2, 22, 8), limits = c(-2, 22)) +
@@ -729,11 +816,12 @@ for (i in seq_len(p)) {
 
 ggplot(tht, aes(x = x, y = y, fill = group)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.5) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   ylab(TeX('$\\widehat{\\theta}$(t)'))  +
   theme(panel.background = element_rect(fill = "white")) +
-  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), legend.position="top")
 
 # T
 
@@ -750,11 +838,12 @@ for (i in seq_len(p)) {
 
 ggplot(tht, aes(x = x, y = y, fill = group)) + geom_line() +
   geom_ribbon(aes(ymin = yl, ymax = yu), alpha = 0.5) +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
   xlab(expression(italic("t"))) +
   scale_fill_discrete(name = "") +
   ylab(TeX('$\\widehat{\\Theta}$(t)'))  +
   theme(panel.background = element_rect(fill = "white")) +
-  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), legend.position="top")
 
 # Tests -------------------------------------------------------------------
 

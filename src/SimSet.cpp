@@ -10,7 +10,7 @@ using namespace Rcpp;
 
 double fs(double t, const double& shift1, int i, const int &n);
 double fr(double t, const double& shift2, int i, const int &n);
-double fg(double t);
+double fg(double t, const int& n);
 
 std::mt19937 gen(123);
 
@@ -47,9 +47,9 @@ List SimSetC(int n, double shift1, double shift2, NumericVector Zij) {
         if (kp != 0) {
           for (int z = 0; z < kp; z++) {
             tp = Udis(gen);
-            temp = 3 + fs(tp, shift1, i, n) + fr(tp, shift2, j, n);
+            temp = 2/sqrt(n) + fs(tp, shift1, i, n) + fr(tp, shift2, j, n);
             for (int di = 0; di < p; di++)
-              temp += fg(tp) * Zij[i-1+n*(j-1)+n*n*di];
+              temp += fg(tp, n) * Zij[i-1+n*(j-1)+n*n*di];
 
             rej = Udis(gen);
             if (rej < temp / maxit) {
@@ -68,19 +68,20 @@ List SimSetC(int n, double shift1, double shift2, NumericVector Zij) {
   return List::create(se, re, te);
 }
 
+//SIM2
+// double fs(double t, const double& shift1, int i, const int &n) {
+//   if (i < n / 3) return shift1*sin(2*PI*t)/2;
+//   if (i > 2 * n / 3) return -shift1*sin(2*PI*t)/2;
+//   return 0;
+// }
+//
+// double fr(double t, const double& shift2, int i, const int &n) {
+//   if (i < n / 3) return shift2 + sin(2*PI*t)/2;
+//   if (i > 2 * n / 3) return - shift2 - sin(2*PI*t)/2;
+//   return 0;
+// }
 
-double fs(double t, const double& shift1, int i, const int &n) {
-  if (i < n / 3) return shift1*sin(2*PI*t)/2;
-  if (i > 2 * n / 3) return -shift1*sin(2*PI*t)/2;
-  return 0;
-}
-
-double fr(double t, const double& shift2, int i, const int &n) {
-  if (i < n / 3) return shift2 + sin(2*PI*t)/2;
-  if (i > 2 * n / 3) return - shift2 - sin(2*PI*t)/2;
-  return 0;
-}
-
+//SIM1
 // double fs(double t, const double& shift1, int i, const int &n) {
 //   return 0.04*(i-(n+1)/2)*sin(2*PI*t);
 // }
@@ -89,8 +90,33 @@ double fr(double t, const double& shift2, int i, const int &n) {
 //   return 0.04*(i-(n+1)/2)*cos(2*PI*t);
 // }
 
+//SIM1.5
+// double fs(double t, const double& shift1, int i, const int &n) {
+//   if (i <= n / 3) return 0.1 + 0.1*sin(2*PI*t);
+//   return -0.05 - 0.05*sin(2*PI*t);
+// }
+//
+// double fr(double t, const double& shift2, int i, const int &n) {
+//   if (i <= n / 3) return 0.1 + 0.1*cos(2*PI*t);
+//   return -0.05 - 0.05*cos(2*PI*t);
+// }
+//
+// double fg(double t) {
+//   return 0.05;
+// }
 
-double fg(double t) {
-  return 0.2;
+//SIM1.6
+double fs(double t, const double& shift1, int i, const int &n) {
+  if (i <= n / 2) return (0.5 + 0.5*sin(2*PI*t))/sqrt(n);
+  return -(0.5 + 0.5*sin(2*PI*t))/sqrt(n);
+}
+
+double fr(double t, const double& shift2, int i, const int &n) {
+  if (i <= n / 2) return (0.5 + 0.5*cos(2*PI*t))/sqrt(n);
+  return -(0.5 + 0.5*cos(2*PI*t))/sqrt(n);
+}
+
+double fg(double t, const int& n) {
+  return 0.25/sqrt(n);
 }
 
