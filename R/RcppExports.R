@@ -5,8 +5,8 @@ SimSetC <- function(n, shift1, shift2, Zij) {
     .Call(`_addCNet_SimSetC`, n, shift1, shift2, Zij)
 }
 
-pvp <- function(P) {
-    .Call(`_addCNet_pvp`, P)
+pvp <- function(P, test = 0L) {
+    .Call(`_addCNet_pvp`, P, test)
 }
 
 splinecalc <- function(Patemp, N_tall, N_tallM, b, n, nb, z1, z2, z3, h1, t, t_sep_t) {

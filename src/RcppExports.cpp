@@ -26,13 +26,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // pvp
-Rcpp::List pvp(Eigen::MatrixXd P);
-RcppExport SEXP _addCNet_pvp(SEXP PSEXP) {
+Rcpp::List pvp(Eigen::MatrixXd P, int test);
+RcppExport SEXP _addCNet_pvp(SEXP PSEXP, SEXP testSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Eigen::MatrixXd >::type P(PSEXP);
-    rcpp_result_gen = Rcpp::wrap(pvp(P));
+    Rcpp::traits::input_parameter< int >::type test(testSEXP);
+    rcpp_result_gen = Rcpp::wrap(pvp(P, test));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -60,7 +61,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_addCNet_SimSetC", (DL_FUNC) &_addCNet_SimSetC, 4},
-    {"_addCNet_pvp", (DL_FUNC) &_addCNet_pvp, 1},
+    {"_addCNet_pvp", (DL_FUNC) &_addCNet_pvp, 2},
     {"_addCNet_splinecalc", (DL_FUNC) &_addCNet_splinecalc, 12},
     {NULL, NULL, 0}
 };

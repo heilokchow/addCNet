@@ -4,7 +4,7 @@
 \alias{nonParametric}
 \title{Non Parametric Estimate}
 \usage{
-nonParametric(data, zij, n, p, tz = 1, h1 = 0.05, test = 0)
+nonParametric(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval = 0)
 }
 \arguments{
 \item{data}{The whole dataset containing pairwise communications, the first column

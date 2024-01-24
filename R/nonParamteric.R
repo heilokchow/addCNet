@@ -18,6 +18,7 @@
 #'
 #' @importFrom Rcpp evalCpp
 #' @import RcppEigen
+#' @import Matrix
 #' @useDynLib addCNet, .registration = TRUE
 #'
 #' @return
@@ -33,13 +34,15 @@
 #' @export
 
 
-nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
+nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval = 0) {
 
   t1 = Sys.time()
 
   t12 = 0
   t23 = 0
   t34 = 0
+  t40 = 0
+  t50 = 0
 
   dim_check = dim(zij)
   n1 = ncol(data)
@@ -82,17 +85,18 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
   } else {
     P = cbind(temp$intercept, temp$x, temp$zij[,,1])
   }
+
+
   t3 = Sys.time()
-  if (test == 0) {
-    VP = pvp(P)
-    Va = VP$Va
-    Pa = VP$Pa
-  } else {
-    Va = t(P) %*% P
-    Pa = solve(Va) %*% t(P)
-  }
+
+  P1 = Matrix::Matrix(P, sparse = TRUE)
+  Va = Matrix::tcrossprod(Matrix::t(P1))
+  Vainv = as.matrix(solve(Va))
+  Pa1 = as.matrix(Vainv %*% Matrix::t(P1))
+
   t4 = Sys.time()
 
+  t41 = Sys.time()
   hash = rep(0, n^2)
   co = 1
   co1 = 1
@@ -116,18 +120,32 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
     N_t[z3, 1] = N_t[z3, 1] + 1
     Nij[z1, z2] = Nij[z1, z2] + 1
 
-    Patemp = Pa[, z3]
+    Patemp = Pa1[, z3]
 
     splinecalc(Patemp, N_tall, N_tallM, b, n, nrow(b), z1, z2, z3, h1, t_norm[i], t_sep_t)
 
     if (t_norm[i] >= t_sep_t[co]) {
+
+      t51 = Sys.time()
+
+      # cat(co, "\n")
+
       if (co == 1) {
-        B[, co] = Pa %*% N_t
+        # B[, co] = as.matrix(Pa1 %*% N_t)
+        B[, co] =  as.matrix(Vainv %*% (Matrix::t(P1) %*% N_t))
         N_tC[, co] = N_t
       } else {
-        B[, co] = B[, co - 1] + Pa %*% N_t
+        # B[, co] = B[, co - 1] + as.matrix(Pa1 %*% N_t)
+        B[, co] = B[, co - 1] +  as.matrix(Vainv %*% (Matrix::t(P1) %*% N_t))
         N_tC[, co] = N_tC[, co - 1] + N_t
       }
+
+      # t61 = Sys.time()
+      # # test = as.matrix(Pa1 %*% N_t)
+      # test = as.matrix(Vainv %*% (t(P1) %*% N_t))
+      # t62 = Sys.time()
+      # t62-t61
+
       B1[1, co] = -sum(B[2:n, co])
       B1[2, co] = -sum(B[(n+1):(2*n-1), co])
       SDo[, co] = 1/n^2 * rowSums(Nij)
@@ -147,6 +165,9 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
       }
 
       N_t = N_t * 0
+
+      t52 = Sys.time()
+      t50 = t50 + t52 - t51
     }
     if (co == 101) {
       break
@@ -154,9 +175,12 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
 
   }
 
+  t42 = Sys.time()
+
   t12 = t12 + t2 - t1
   t23 = t23 + t3 - t2
   t34 = t34 + t4 - t3
+  t40 = t40 + t42 - t41
 
   b1[1, ] = - colSums(b[2:n,])
   b1[2, ] = - colSums(b[(n+1):(2*n-1),])
@@ -195,8 +219,8 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0) {
                    V = V/100,
                    NT = N_tC,
                    NTs = N_tallMC,
-                   Pa = Pa,
-                   ts = c(t12, t23, t34))
+                   Pa = Pa1,
+                   ts = c(t12, t23, t34, t40, t50))
   } else {
     output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
                                             outgoing = rbind(matrix(B1[1,], nrow = 1),

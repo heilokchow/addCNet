@@ -91,7 +91,7 @@ fgI1 = Vectorize(fgI)
 
 # SIM1.6
 
-n = 1000
+n = 500
 p = 1
 
 bs <- function(t) {2/sqrt(n)}
@@ -232,7 +232,7 @@ for (i in 1:rep) {
 
   # Model Run
   t1 = Sys.time()
-  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.07, test = 0)
+  np0 = nonParametric(result$trail, array(zij, c(n,n,p,1)), n, p, h1 = 0.07, test = 0, pvpval = 0)
   t2 = Sys.time()
 
   all_result[[i]] = rbind(np0$homo_coefficients$outgoing, np0$homo_coefficients$incoming, np0$nonhomo_coefficients)
