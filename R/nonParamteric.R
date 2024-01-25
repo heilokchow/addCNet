@@ -41,7 +41,8 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
   t12 = 0
   t23 = 0
   t34 = 0
-  t40 = 0
+  t45 = 0
+  t56 = 0
   t50 = 0
 
   dim_check = dim(zij)
@@ -90,13 +91,12 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
   t3 = Sys.time()
 
   P1 = Matrix::Matrix(P, sparse = TRUE)
-  Va = Matrix::tcrossprod(Matrix::t(P1))
-  Vainv = as.matrix(solve(Va))
+  Va = as.matrix(Matrix::tcrossprod(Matrix::t(P1)))
+  Vainv = solve(Va)
   Pa1 = as.matrix(Vainv %*% Matrix::t(P1))
 
   t4 = Sys.time()
 
-  t41 = Sys.time()
   hash = rep(0, n^2)
   co = 1
   co1 = 1
@@ -122,23 +122,24 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
 
     Patemp = Pa1[, z3]
 
-    splinecalc(Patemp, N_tall, N_tallM, b, n, nrow(b), z1, z2, z3, h1, t_norm[i], t_sep_t)
+    splinecalc(Patemp, N_tall, N_tallM, N_tallMC, b, n, nrow(b), z1, z2, z3, h1, t_norm[i], t_sep_t)
+    cumcalc(Patemp, N_tC, B, n, nrow(B), z3, t_norm[i], t_sep_t)
 
     if (t_norm[i] >= t_sep_t[co]) {
 
       t51 = Sys.time()
 
       # cat(co, "\n")
-
-      if (co == 1) {
-        # B[, co] = as.matrix(Pa1 %*% N_t)
-        B[, co] =  as.matrix(Vainv %*% (Matrix::t(P1) %*% N_t))
-        N_tC[, co] = N_t
-      } else {
-        # B[, co] = B[, co - 1] + as.matrix(Pa1 %*% N_t)
-        B[, co] = B[, co - 1] +  as.matrix(Vainv %*% (Matrix::t(P1) %*% N_t))
-        N_tC[, co] = N_tC[, co - 1] + N_t
-      }
+#
+      # if (co == 1) {
+      #   # B[, co] = as.matrix(Pa1 %*% N_t)
+      #   B[, co] =  as.matrix(Vainv %*% (Matrix::t(P1) %*% N_t))
+      #   N_tC[, co] = N_t
+      # } else {
+      #   # B[, co] = B[, co - 1] + as.matrix(Pa1 %*% N_t)
+      #   B[, co] = B[, co - 1] +  as.matrix(Vainv %*% (Matrix::t(P1) %*% N_t))
+      #   N_tC[, co] = N_tC[, co - 1] + N_t
+      # }
 
       # t61 = Sys.time()
       # # test = as.matrix(Pa1 %*% N_t)
@@ -152,6 +153,7 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
       SDi[, co] = 1/n^2 * colSums(Nij)
       co = co + 1
       V = V + Va
+      t52 = Sys.time()
 
       if (co == itz[co1]) {
         co1 = co1 + 1
@@ -160,13 +162,14 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
         } else {
           P = cbind(temp$intercept, temp$x, temp$zij[,,co1])
         }
-        Va = t(P) %*% P
-        Pa = solve(Va) %*% t(P)
+        P1 = Matrix::Matrix(P, sparse = TRUE)
+        Va = Matrix::tcrossprod(Matrix::t(P1))
+        Vainv = as.matrix(solve(Va))
+        Pa1 = as.matrix(Vainv %*% Matrix::t(P1))
       }
 
       N_t = N_t * 0
 
-      t52 = Sys.time()
       t50 = t50 + t52 - t51
     }
     if (co == 101) {
@@ -175,12 +178,8 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
 
   }
 
-  t42 = Sys.time()
+  t5 = Sys.time()
 
-  t12 = t12 + t2 - t1
-  t23 = t23 + t3 - t2
-  t34 = t34 + t4 - t3
-  t40 = t40 + t42 - t41
 
   b1[1, ] = - colSums(b[2:n,])
   b1[2, ] = - colSums(b[(n+1):(2*n-1),])
@@ -190,14 +189,15 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
     SDib[, j] = 1/n^2 * colSums(N_tallM[,,j])
   }
 
-  for (i in 1:n) {
-    for (j in 1:n) {
-      for (t in 1:100) {
-        z3 = hash[(i-1)*n+j]
-        N_tallMC[z3, t] = N_tallM[i, j, t]
-      }
-    }
-  }
+  t6 = Sys.time()
+
+
+  t12 = t12 + t2 - t1
+  t23 = t23 + t3 - t2
+  t34 = t34 + t4 - t3
+  t45 = t45 + t5 - t4
+  t56 = t56 + t6 - t5
+
 
   if (!is.null(zij)) {
     output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
@@ -220,7 +220,7 @@ nonParametric <- function(data, zij, n, p, tz = 1, h1 = 0.05, test = 0, pvpval =
                    NT = N_tC,
                    NTs = N_tallMC,
                    Pa = Pa1,
-                   ts = c(t12, t23, t34, t40, t50))
+                   ts = c(t12, t23, t34, t45, t56, t50))
   } else {
     output <- list(homo_coefficients = list(baseline = matrix(B[1,], nrow = 1),
                                             outgoing = rbind(matrix(B1[1,], nrow = 1),

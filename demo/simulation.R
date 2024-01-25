@@ -47,7 +47,7 @@ fgI1 = Vectorize(fgI)
 
 # SIM1.5
 
-n = 300
+n = 60
 p = 1
 
 bs <- function(t) {0.2}
@@ -91,7 +91,7 @@ fgI1 = Vectorize(fgI)
 
 # SIM1.6
 
-n = 500
+n = 100
 p = 1
 
 bs <- function(t) {2/sqrt(n)}
@@ -215,7 +215,7 @@ all_result_kh = list()
 all_result_kh_var = list()
 all_result_kh_zval = list()
 
-rep = 1
+rep = 100
 theta_sd = matrix(nrow = rep, ncol = 3)
 # theta_sd = rbind(theta_sd, matrix(0, nrow = rep-100, ncol = 3))
 theta_ab_sd = matrix(nrow = rep, ncol = 3)

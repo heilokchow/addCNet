@@ -3,7 +3,7 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export]]
-void splinecalc(NumericVector Patemp, NumericVector N_tall, NumericVector N_tallM, NumericVector b, int n,
+void splinecalc(NumericVector Patemp, NumericVector N_tall, NumericVector N_tallM, NumericVector N_tallMC, NumericVector b, int n,
                        int nb, int z1, int z2, int z3, double h1, double t, NumericVector t_sep_t) {
   int z11 = z1 - 1;
   int z22 = z2 - 1;
@@ -18,10 +18,10 @@ void splinecalc(NumericVector Patemp, NumericVector N_tall, NumericVector N_tall
     diff = (t - t_sep_t[j])/h1;
     ktemp = inv_sqrt_2pi / h1 * std::exp(-0.5 * diff * diff);
     N_tall[j*n1 + z33] += ktemp;
+    N_tallMC[j*n1 + z33] += ktemp * ktemp;
     N_tallM[j*n2 + z22*n + z11] += ktemp * ktemp;
     for (int i = 0; i < nb; i++) {
       b[j*nb + i] += Patemp[i] * ktemp;
-
     }
   }
 }

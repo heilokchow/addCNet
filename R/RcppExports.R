@@ -5,11 +5,15 @@ SimSetC <- function(n, shift1, shift2, Zij) {
     .Call(`_addCNet_SimSetC`, n, shift1, shift2, Zij)
 }
 
+cumcalc <- function(Patemp, N_tC, B, n, nb, z3, t, t_sep_t) {
+    invisible(.Call(`_addCNet_cumcalc`, Patemp, N_tC, B, n, nb, z3, t, t_sep_t))
+}
+
 pvp <- function(P, test = 0L) {
     .Call(`_addCNet_pvp`, P, test)
 }
 
-splinecalc <- function(Patemp, N_tall, N_tallM, b, n, nb, z1, z2, z3, h1, t, t_sep_t) {
-    invisible(.Call(`_addCNet_splinecalc`, Patemp, N_tall, N_tallM, b, n, nb, z1, z2, z3, h1, t, t_sep_t))
+splinecalc <- function(Patemp, N_tall, N_tallM, N_tallMC, b, n, nb, z1, z2, z3, h1, t, t_sep_t) {
+    invisible(.Call(`_addCNet_splinecalc`, Patemp, N_tall, N_tallM, N_tallMC, b, n, nb, z1, z2, z3, h1, t, t_sep_t))
 }
 
