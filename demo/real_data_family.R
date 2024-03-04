@@ -6,7 +6,7 @@ library(ggpubr)
 library(purrr)
 library(igraph)
 library(addCNet)
-
+library(latex2exp)
 
 setwd("Z:/new data/Friends&Family/DataRelease")
 
@@ -146,7 +146,178 @@ t_sep_t = seq(1, 100, 1)/100
 
 p = 3
 npara = nonParametric(trail, zij, n, 3, tz = tz)
+npara_homo = nonParametric_homo(trail, zij, n, 3, tz = tz)
+npara_del_1 = nonParametric(trail, zij[,,-1,], n, 2, tz = tz)
+npara_del_2 = nonParametric(trail, zij[,,-2,], n, 2, tz = tz)
+npara_del_3 = nonParametric(trail, zij[,,-3,], n, 2, tz = tz)
 
+
+
+# Partial R^2 -------------------------------------------------------------
+
+
+k = seq(5, 95, 5)
+
+p = 3
+RSS = rep(0, length(k))
+RSS_homo = rep(0, length(k))
+RSS_del_1 = rep(0, length(k))
+RSS_del_2 = rep(0, length(k))
+RSS_del_3 = rep(0, length(k))
+
+for (z in k) {
+
+  ts = z
+  te = z + 5
+
+  Nij = matrix(0, nrow = n, ncol = n)
+
+  for (i in 1:nrow(trail)) {
+    if (trail[i,3] > t_sep_t[ts] && trail[i,3] <  t_sep_t[te] ) {
+      p1 = trail[i,1]
+      q1 = trail[i,2]
+      Nij[p1, q1] = Nij[p1, q1] + 1
+    }
+  }
+
+  Lij = matrix(0, nrow = n, ncol = n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if (i != j) {
+        k2 = which.max(z/100 < tz)
+        Lij[i, j] = Lij[i, j] + sum(npara$nonhomo_coefficients[, te] * zij[i,j,,k2])
+        Lij[i, j] = Lij[i, j] - sum(npara$nonhomo_coefficients[, ts] * zij[i,j,,k2])
+        Lij[i, j] = Lij[i, j] + npara$homo_coefficients$outgoing[i, te] + npara$homo_coefficients$incoming[j, te]
+        Lij[i, j] = Lij[i, j] - npara$homo_coefficients$outgoing[i, ts] - npara$homo_coefficients$incoming[j, ts]
+        Lij[i, j] = Lij[i, j] + npara$homo_coefficients$baseline[te] - npara$homo_coefficients$baseline[ts]
+      }
+    }
+  }
+
+  Lij0 = matrix(0, nrow = n, ncol = n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if (i != j) {
+        k2 = which.max(z/100 < tz)
+        Lij0[i, j] = Lij0[i, j] + sum(npara_homo$nonhomo_coefficients[, te] * zij[i,j,,k2])
+        Lij0[i, j] = Lij0[i, j] - sum(npara_homo$nonhomo_coefficients[, ts] * zij[i,j,,k2])
+        Lij0[i, j] = Lij0[i, j] + npara_homo$homo_coefficients$baseline[te] - npara_homo$homo_coefficients$baseline[ts]
+      }
+    }
+  }
+
+  Lij1 = matrix(0, nrow = n, ncol = n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if (i != j) {
+        k2 = which.max(z/100 < tz)
+        Lij1[i, j] = Lij1[i, j] + sum(npara_del_1$nonhomo_coefficients[, te] * zij[i,j,-1,k2])
+        Lij1[i, j] = Lij1[i, j] - sum(npara_del_1$nonhomo_coefficients[, ts] * zij[i,j,-1,k2])
+        Lij1[i, j] = Lij1[i, j] + npara_del_1$homo_coefficients$outgoing[i, te] + npara_del_1$homo_coefficients$incoming[j, te]
+        Lij1[i, j] = Lij1[i, j] - npara_del_1$homo_coefficients$outgoing[i, ts] - npara_del_1$homo_coefficients$incoming[j, ts]
+        Lij1[i, j] = Lij1[i, j] + npara_del_1$homo_coefficients$baseline[te] - npara_del_1$homo_coefficients$baseline[ts]
+      }
+    }
+  }
+
+  Lij2 = matrix(0, nrow = n, ncol = n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if (i != j) {
+        k2 = which.max(z/100 < tz)
+        Lij2[i, j] = Lij2[i, j] + sum(npara_del_2$nonhomo_coefficients[, te] * zij[i,j,-2,k2])
+        Lij2[i, j] = Lij2[i, j] - sum(npara_del_2$nonhomo_coefficients[, ts] * zij[i,j,-2,k2])
+        Lij2[i, j] = Lij2[i, j] + npara_del_2$homo_coefficients$outgoing[i, te] + npara_del_2$homo_coefficients$incoming[j, te]
+        Lij2[i, j] = Lij2[i, j] - npara_del_2$homo_coefficients$outgoing[i, ts] - npara_del_2$homo_coefficients$incoming[j, ts]
+        Lij2[i, j] = Lij2[i, j] + npara_del_2$homo_coefficients$baseline[te] - npara_del_2$homo_coefficients$baseline[ts]
+      }
+    }
+  }
+
+  Lij3 = matrix(0, nrow = n, ncol = n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      if (i != j) {
+        k2 = which.max(z/100 < tz)
+        Lij3[i, j] = Lij3[i, j] + sum(npara_del_3$nonhomo_coefficients[, te] * zij[i,j,-3,k2])
+        Lij3[i, j] = Lij3[i, j] - sum(npara_del_3$nonhomo_coefficients[, ts] * zij[i,j,-3,k2])
+        Lij3[i, j] = Lij3[i, j] + npara_del_3$homo_coefficients$outgoing[i, te] + npara_del_3$homo_coefficients$incoming[j, te]
+        Lij3[i, j] = Lij3[i, j] - npara_del_3$homo_coefficients$outgoing[i, ts] - npara_del_3$homo_coefficients$incoming[j, ts]
+        Lij3[i, j] = Lij3[i, j] + npara_del_3$homo_coefficients$baseline[te] - npara_del_3$homo_coefficients$baseline[ts]
+      }
+    }
+  }
+
+  RSS[z/5] = sum((Nij - Lij)^2)
+  RSS_homo[z/5] = sum((Nij - Lij0)^2)
+  RSS_del_1[z/5] = sum((Nij - Lij1)^2)
+  RSS_del_2[z/5] = sum((Nij - Lij2)^2)
+  RSS_del_3[z/5] = sum((Nij - Lij3)^2)
+
+
+  cat(z, "\n")
+}
+
+1-RSS/RSS_homo
+1-RSS/RSS_del_1
+1-RSS/RSS_del_2
+1-RSS/RSS_del_3
+
+plot_t1 = seq(as.Date("2010/03/18"),as.Date("2011/07/15"),length = 19)
+
+df1 = data.frame(x = rep(plot_t1), y = c(1-RSS/RSS_homo), group = c(rep("heterogeneous", 19)))
+
+q1 = ggplot(df1, aes(x = x, y = y)) +
+  geom_bar(stat = "identity", fill = "#E69F00") +
+  scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
+  scale_y_continuous(limits = c(-0.05, 0.4)) +
+  theme(legend.position="top", panel.background = element_rect(fill = "white")) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
+  xlab("Time") +
+  ylab(TeX('Partial $R^2')) +
+  ggtitle("heterogeneous")
+
+df2 = data.frame(x = rep(plot_t1), y = c(1-RSS/RSS_del_1), group = c(rep("couple", 19)))
+
+q2 = ggplot(df2, aes(x = x, y = y)) +
+  geom_bar(stat = "identity", fill = "#56B4E9") +
+  scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
+  scale_y_continuous(limits = c(-0.05, 0.4)) +
+  theme(legend.position="top", panel.background = element_rect(fill = "white")) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
+  xlab("Time") +
+  ylab(TeX('Partial $R^2')) + ggtitle("couple without children")
+
+
+df3 = data.frame(x = rep(plot_t1), y = c(1-RSS/RSS_del_2))
+
+q3 = ggplot(df3, aes(x = x, y = y)) +
+  geom_bar(stat = "identity", fill = "#009E73") +
+  scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
+  scale_y_continuous(limits = c(-0.05, 0.4)) +
+  theme(legend.position="top", panel.background = element_rect(fill = "white")) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
+  xlab("Time") +
+  ylab(TeX('Partial $R^2')) +
+  ggtitle("couple with children")
+
+df4 = data.frame(x = rep(plot_t1), y = c(1-RSS/RSS_del_3))
+
+q4 = ggplot(df4, aes(x = x, y = y)) +
+  geom_bar(stat = "identity", fill = "#F0E442") +
+  scale_fill_discrete(name = "") +
+  scale_x_date(date_labels = "%d-%b-%y", breaks = "12 week") +
+  scale_y_continuous(limits = c(-0.05, 0.4)) +
+  theme(legend.position="top", panel.background = element_rect(fill = "white")) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1), axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.3)) +
+  xlab("Time") +
+  ylab(TeX('Partial $R^2')) +
+  ggtitle("friend")
+
+ggarrange(q1, q4, q2, q3, ncol = 2, nrow = 2)
 
 # Correlation plot --------------------------------------------------------
 
